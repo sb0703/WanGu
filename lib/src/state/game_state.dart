@@ -40,6 +40,8 @@ class GameState extends ChangeNotifier {
     _log('踏入修真界，起点：${_currentNode.name}');
   }
 
+  static const int _bagCapacity = 20;
+
   final Random _rng;
   int _tick;
   WorldClock _clock;
@@ -48,6 +50,23 @@ class GameState extends ChangeNotifier {
   late MapNode _currentNode;
   List<LogEntry> _logs;
 
+  final Map<String, Item> _catalog = {
+    'herb': const Item(
+      id: 'herb',
+      name: '疗伤草',
+      description: '嚼服可恢复气血。',
+      type: ItemType.consumable,
+      hpBonus: 25,
+    ),
+    'rusty_sword': const Item(
+      id: 'rusty_sword',
+      name: '锈铁剑',
+      description: '破旧的武器，聊胜于无。',
+      type: ItemType.weapon,
+      attackBonus: 5,
+    ),
+  };
+
   // Public getters
   int get tick => _tick;
   WorldClock get clock => _clock;
@@ -55,11 +74,16 @@ class GameState extends ChangeNotifier {
   MapNode get currentNode => _currentNode;
   List<MapNode> get mapNodes => List.unmodifiable(_mapNodes);
   List<LogEntry> get logs => List.unmodifiable(_logs);
+  Item? get equippedWeapon =>
+      _player.equipped.isEmpty ? null : _player.equipped.first;
+  int get bagCapacity => _bagCapacity;
 
   bool get isDead => _player.lifespanHours <= 0 || _player.stats.hp <= 0;
 
   void cultivate({int hours = 1}) {
-    if (isDead) return;
+    if (isDead) {
+      return;
+    }
     final gainedXp = 6 + _player.stats.insight;
     _player = _player.copyWith(xp: _player.xp + gainedXp);
     _advanceTime(hours);
@@ -69,7 +93,9 @@ class GameState extends ChangeNotifier {
   }
 
   void moveTo(MapNode node) {
-    if (isDead) return;
+    if (isDead) {
+      return;
+    }
     _currentNode = node;
     _advanceTime(2);
     _log('移动到【${node.name}】');
@@ -78,11 +104,68 @@ class GameState extends ChangeNotifier {
   }
 
   void rest({int hours = 2}) {
-    if (isDead) return;
+    if (isDead) {
+      return;
+    }
     final newHp = (_player.stats.hp + 10 * hours).clamp(0, _player.stats.maxHp);
     _player = _player.copyWith(stats: _player.stats.copyWith(hp: newHp));
     _advanceTime(hours);
     _log('调息休整，恢复体力');
+    notifyListeners();
+  }
+
+  // Inventory operations
+  bool _addItemById(String id) {
+    final item = _catalog[id];
+    if (item == null) {
+      return false;
+    }
+    return _addItem(item);
+  }
+
+  bool _addItem(Item item) {
+    if (_player.inventory.length >= _bagCapacity) {
+      _log('背包已满，放弃了 ${item.name}');
+      return false;
+    }
+    _player = _player.copyWith(inventory: [..._player.inventory, item]);
+    return true;
+  }
+
+  void discard(Item item) {
+    if (!_player.inventory.contains(item)) {
+      return;
+    }
+    final newInventory = [..._player.inventory]..remove(item);
+    _player = _player.copyWith(inventory: newInventory);
+    _log('丢弃了 ${item.name}');
+    notifyListeners();
+  }
+
+  void equipWeapon(Item item) {
+    if (item.type != ItemType.weapon || !_player.inventory.contains(item)) {
+      return;
+    }
+    final currentWeapon = equippedWeapon;
+    final newInventory = [..._player.inventory]..remove(item);
+    if (currentWeapon != null) {
+      newInventory.add(currentWeapon);
+    }
+    _player = _player.copyWith(inventory: newInventory, equipped: [item]);
+    _log(
+      '装备了 ${item.name}${currentWeapon != null ? '，替换掉 ${currentWeapon.name}' : ''}',
+    );
+    notifyListeners();
+  }
+
+  void useConsumable(Item item) {
+    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) {
+      return;
+    }
+    final newStats = _player.stats.healHp(item.hpBonus);
+    final newInventory = [..._player.inventory]..remove(item);
+    _player = _player.copyWith(inventory: newInventory, stats: newStats);
+    _log('服用了 ${item.name}，气血恢复。');
     notifyListeners();
   }
 
@@ -143,8 +226,12 @@ class GameState extends ChangeNotifier {
         stats: _player.stats.copyWith(hp: result.playerHp),
       );
       _log('击败 ${enemy.name}，获得 ${result.xpGained} 修为');
-      if (result.lootedItemName != null) {
-        _log('拾取：${result.lootedItemName}');
+      if (result.lootedItemId != null) {
+        final added = _addItemById(result.lootedItemId!);
+        final name = _catalog[result.lootedItemId!]!.name;
+        if (added) {
+          _log('拾取：$name');
+        }
       }
       _checkBreakthrough();
     } else {
@@ -156,33 +243,10 @@ class GameState extends ChangeNotifier {
   }
 
   void _findHerb() {
-    const herb = Item(
-      id: 'herb_common',
-      name: '普通灵草',
-      description: '可直接服用，恢复少量气血。',
-      type: ItemType.consumable,
-      hpBonus: 20,
-    );
-    final newInventory = [..._player.inventory, herb];
-    _player = _player.copyWith(inventory: newInventory);
-    _log('在灌木丛中找到了一株灵草。');
-  }
-
-  void useConsumable(Item item) {
-    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) {
-      return;
+    final added = _addItemById('herb');
+    if (added) {
+      _log('在灌木丛中找到了一株疗伤草。');
     }
-    final newHp = (_player.stats.hp + item.hpBonus).clamp(
-      0,
-      _player.stats.maxHp,
-    );
-    final newInventory = [..._player.inventory]..remove(item);
-    _player = _player.copyWith(
-      inventory: newInventory,
-      stats: _player.stats.copyWith(hp: newHp),
-    );
-    _log('服用了 ${item.name}，气血恢复。');
-    notifyListeners();
   }
 
   void _encounterNpc() {
@@ -192,26 +256,27 @@ class GameState extends ChangeNotifier {
   BattleResult _simulateBattle(Enemy enemy) {
     int playerHp = _player.stats.hp;
     int enemyHp = enemy.stats.hp;
-    final playerAtk = (_player.stats.attack + _itemAttackBonus()) * 1.0;
+    final playerAtk = (_player.stats.attack + _itemAttackBonus()).toDouble();
     final enemyAtk = enemy.stats.attack.toDouble();
     final playerDef = _player.stats.defense.toDouble();
     final enemyDef = enemy.stats.defense.toDouble();
+
+    String? lootId;
 
     // 5 回合简化
     for (int round = 0; round < 5; round++) {
       final dmgToEnemy = max(1, (playerAtk - enemyDef).round());
       enemyHp -= dmgToEnemy;
       if (enemyHp <= 0) {
-        final loot = enemy.loot.isNotEmpty
+        lootId = enemy.loot.isNotEmpty
             ? enemy.loot[_rng.nextInt(enemy.loot.length)]
             : null;
-        final lootedName = loot;
         return BattleResult(
           victory: true,
           playerHp: max(1, playerHp),
           enemyHp: 0,
           xpGained: enemy.xpReward,
-          lootedItemName: lootedName,
+          lootedItemId: lootId,
         );
       }
       final dmgToPlayer = max(1, (enemyAtk - playerDef).round());
@@ -254,7 +319,7 @@ class GameState extends ChangeNotifier {
           speed: 10,
           insight: 0,
         ),
-        loot: const ['兽骨'],
+        loot: const ['rusty_sword', 'herb'],
         xpReward: 20,
       );
     }
@@ -269,7 +334,7 @@ class GameState extends ChangeNotifier {
         speed: 6,
         insight: 0,
       ),
-      loot: const ['獠牙'],
+      loot: const ['herb'],
       xpReward: 12,
     );
   }

@@ -16,7 +16,7 @@ class OverviewSection extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: ListView(
         children: [
-          _header(player),
+          _header(player, game),
           const SizedBox(height: 12),
           StatCards(player: player),
           const SizedBox(height: 12),
@@ -32,7 +32,7 @@ class OverviewSection extends StatelessWidget {
     );
   }
 
-  Widget _header(Player player) {
+  Widget _header(Player player, GameState game) {
     return Row(
       children: [
         CircleAvatar(
@@ -49,6 +49,10 @@ class OverviewSection extends StatelessWidget {
             ),
             Text('境界：${player.realm.name}'),
             Text('修为：${player.xp}/${player.realm.maxXp}'),
+            Text(
+              '寿元：${(player.lifespanHours / 24 / 365).toStringAsFixed(1)} 年',
+            ),
+            Text('武器：${game.equippedWeapon?.name ?? '未装备'}'),
           ],
         ),
       ],

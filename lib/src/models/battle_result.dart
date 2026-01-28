@@ -4,12 +4,12 @@ class BattleResult {
     required this.playerHp,
     required this.enemyHp,
     required this.xpGained,
-    this.lootedItemName,
+    this.lootedItemId,
   });
 
   final bool victory;
   final int playerHp;
   final int enemyHp;
   final int xpGained;
-  final String? lootedItemName;
+  final String? lootedItemId;
 }

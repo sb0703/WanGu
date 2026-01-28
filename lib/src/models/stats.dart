@@ -17,6 +17,10 @@ class Stats {
   final int speed;
   final int insight; // 悟性或经验效率
 
+  Stats healHp(int value) => copyWith(hp: (hp + value).clamp(0, maxHp));
+
+  Stats takeDamage(int value) => copyWith(hp: (hp - value).clamp(0, maxHp));
+
   Stats copyWith({
     int? maxHp,
     int? hp,
