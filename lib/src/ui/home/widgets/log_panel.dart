@@ -26,7 +26,6 @@ class LogPanel extends StatelessWidget {
           ),
         ],
       ),
-      // Removed fixed height: 200
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -39,7 +38,7 @@ class LogPanel extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '江湖传闻',
+                    '江湖见闻',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: scheme.primary,
@@ -64,7 +63,6 @@ class LogPanel extends StatelessWidget {
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 final log = logs[index];
-                // In reverse list, index 0 is the newest log
                 final isNewest = index == 0;
 
                 return Padding(

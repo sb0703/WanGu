@@ -2,7 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-import '../models/battle_result.dart';
+import '../data/enemies_repository.dart';
+import '../data/items_repository.dart';
+import '../data/maps_repository.dart';
+import '../models/battle.dart';
 import '../models/enemy.dart';
 import '../models/item.dart';
 import '../models/log_entry.dart';
@@ -51,29 +54,19 @@ class GameState extends ChangeNotifier {
   late MapNode _currentNode;
   List<LogEntry> _logs;
 
-  final Map<String, Item> _catalog = {
-    'herb': const Item(
-      id: 'herb',
-      name: '疗伤草',
-      description: '服用可恢复气血。',
-      type: ItemType.consumable,
-      hpBonus: 25,
-    ),
-    'rusty_sword': const Item(
-      id: 'rusty_sword',
-      name: '生锈铁剑',
-      description: '旧铁剑，聊胜于无。',
-      type: ItemType.weapon,
-      attackBonus: 5,
-    ),
-    'cloth_robe': const Item(
-      id: 'cloth_robe',
-      name: '粗布护衣',
-      description: '最简单的护身布衣，略有防护。',
-      type: ItemType.armor,
-      defenseBonus: 3,
-    ),
-  };
+  // Grid Exploration State
+  static const int gridRows = 8;
+  static const int gridCols = 6;
+  Point<int> _playerGridPos = const Point(0, 0);
+  Set<Point<int>> _visitedTiles = {};
+
+  // Battle State
+  Battle? _currentBattle;
+  Battle? get currentBattle => _currentBattle;
+
+  // Getters for exploration
+  Point<int> get playerGridPos => _playerGridPos;
+  Set<Point<int>> get visitedTiles => _visitedTiles;
 
   // Public getters
   int get tick => _tick;
@@ -106,13 +99,61 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void moveTo(MapNode node) {
+  /// Enter a new region (travel)
+  void enterRegion(MapNode node) {
     if (isDead) return;
+    if (_currentNode == node) return; // Already here
+
     _currentNode = node;
-    _advanceTime(2);
-    _log('移动到 ${node.name}');
-    _triggerNodeEvent(node);
+    _advanceTime(1); // Travel takes time
+    _log('抵达 ${_currentNode.name}，开始探索。');
+
+    // Reset exploration state
+    _playerGridPos = const Point(0, 0); // Start at top-left or random
+    _visitedTiles = {_playerGridPos};
+
     notifyListeners();
+  }
+
+  /// Move within the grid
+  void exploreMove(int row, int col) {
+    if (isDead) return;
+
+    final target = Point(row, col);
+    if (_visitedTiles.contains(target) && target != _playerGridPos) {
+      // Just moving to already visited tile
+      _playerGridPos = target;
+      notifyListeners();
+      return;
+    }
+
+    // Moving to new tile or current tile (if logic requires)
+    // Validate adjacency? For now allow click any adjacent
+    final dx = (target.x - _playerGridPos.x).abs();
+    final dy = (target.y - _playerGridPos.y).abs();
+    if (dx + dy != 1) {
+      // Only allow adjacent moves
+      return;
+    }
+
+    _playerGridPos = target;
+    _visitedTiles.add(target);
+
+    // Trigger Event
+    _advanceTime(
+      0,
+    ); // 0 days, maybe add hours later. For now just tick internally if needed.
+    // Let's say 2 hours per step?
+    // _clock = _clock.tickHours(2); // Need to implement tickHours in WorldClock or just ignore for now
+
+    _triggerNodeEvent(_currentNode);
+    notifyListeners();
+  }
+
+  // Deprecated: moveTo used to be direct travel+event
+  // Keeping for compatibility if needed, but should use enterRegion + exploreMove
+  void moveTo(MapNode node) {
+    enterRegion(node);
   }
 
   void rest({int days = 2}) {
@@ -131,7 +172,7 @@ class GameState extends ChangeNotifier {
   }
 
   bool _addItemById(String id) {
-    final item = _catalog[id];
+    final item = ItemsRepository.get(id);
     if (item == null) return false;
     return _addItem(item);
   }
@@ -254,34 +295,148 @@ class GameState extends ChangeNotifier {
 
   void _encounterEnemy(MapNode node) {
     final enemy = _rollEnemy(node.danger);
-    _log('遭遇 ${enemy.name}！');
-    final result = _simulateBattle(enemy);
-    if (result.victory) {
-      _player = _player.copyWith(
-        xp: _player.xp + result.xpGained,
-        stats: _player.stats.copyWith(
-          hp: result.playerHp,
-          spirit: result.playerSpirit,
-        ),
-      );
-      _log('击败 ${enemy.name}，获得 ${result.xpGained} 修为');
-      if (result.lootedItemId != null) {
-        final added = _addItemById(result.lootedItemId!);
-        final name = _catalog[result.lootedItemId!]!.name;
-        if (added) {
-          _log('拾取：$name');
-        }
-      }
-      _checkBreakthrough();
-    } else {
-      _player = _player.copyWith(
-        stats: _player.stats.copyWith(
-          hp: result.playerHp,
-          spirit: result.playerSpirit,
-        ),
-      );
-      _log('战败，${enemy.name}令你重伤，先回去休整。');
+    _log('遭遇 ${enemy.name}！准备战斗！');
+
+    // Start Battle State
+    _currentBattle = Battle(
+      enemy: enemy,
+      playerHp: _player.stats.hp,
+      playerMaxHp: _player.stats.maxHp,
+      playerSpirit: _player.stats.spirit,
+      playerMaxSpirit: _player.stats.maxSpirit,
+    );
+    notifyListeners();
+  }
+
+  void progressBattle() {
+    if (_currentBattle == null || _currentBattle!.isOver) return;
+
+    final battle = _currentBattle!;
+    final enemy = battle.enemy;
+
+    // Player Turn
+    // Simple logic for now: Attack
+    // Calculate stats
+    final playerAtkBase = (_player.stats.attack + _itemAttackBonus())
+        .toDouble();
+    final enemyDef = enemy.stats.defense.toDouble();
+    final playerSpeed = _player.stats.speed;
+    final enemySpeed = enemy.stats.speed;
+
+    // Spirit Usage
+    final hasSpirit = battle.playerSpirit >= 2;
+    final isCrit =
+        _rng.nextDouble() < (0.05 + (playerSpeed > enemySpeed ? 0.1 : 0.0));
+    final critMultiplier = isCrit ? 1.5 : 1.0;
+
+    double atkThisRound = hasSpirit ? playerAtkBase : playerAtkBase * 0.8;
+    if (hasSpirit) {
+      battle.playerSpirit -= 2;
     }
+
+    // Variance
+    atkThisRound *= (0.9 + _rng.nextDouble() * 0.2);
+    final rawDmg = (atkThisRound * critMultiplier) - enemyDef;
+    final dmgToEnemy = max(1, rawDmg.round());
+
+    battle.enemyHp -= dmgToEnemy;
+    battle.logs.add(
+      BattleLog(
+        '你对 ${enemy.name} 造成了 $dmgToEnemy 点伤害！',
+        isPlayerAction: true,
+        damage: dmgToEnemy,
+        isCrit: isCrit,
+      ),
+    );
+
+    if (battle.enemyHp <= 0) {
+      battle.enemyHp = 0;
+      battle.state = BattleState.victory;
+      _resolveBattleVictory(battle);
+      notifyListeners();
+      return;
+    }
+
+    // Enemy Turn
+    final enemyAtk = enemy.stats.attack.toDouble();
+    final playerDef = (_player.stats.defense + _itemDefenseBonus()).toDouble();
+
+    double enemyAtkThisRound = enemyAtk * (0.9 + _rng.nextDouble() * 0.2);
+    final enemyIsCrit = _rng.nextDouble() < 0.05;
+    if (enemyIsCrit) enemyAtkThisRound *= 1.5;
+
+    final rawDmgToPlayer = enemyAtkThisRound - playerDef;
+    final dmgToPlayer = max(1, rawDmgToPlayer.round());
+
+    battle.playerHp -= dmgToPlayer;
+    battle.logs.add(
+      BattleLog(
+        '${enemy.name} 对你造成了 $dmgToPlayer 点伤害！',
+        isPlayerAction: false,
+        damage: dmgToPlayer,
+        isCrit: enemyIsCrit,
+      ),
+    );
+
+    if (battle.playerHp <= 0) {
+      battle.playerHp = 0;
+      battle.state = BattleState.defeat;
+      _resolveBattleDefeat(battle);
+      notifyListeners();
+      return;
+    }
+
+    battle.turn++;
+    if (battle.turn >= 20) {
+      // Limit turns
+      battle.state = BattleState.fled; // Draw/Fled
+      _log('战斗僵持不下，双方各自退去。');
+      // Update player state anyway
+      _player = _player.copyWith(
+        stats: _player.stats.copyWith(
+          hp: battle.playerHp,
+          spirit: battle.playerSpirit,
+        ),
+      );
+    }
+
+    notifyListeners();
+  }
+
+  void _resolveBattleVictory(Battle battle) {
+    final enemy = battle.enemy;
+    _player = _player.copyWith(
+      xp: _player.xp + enemy.xpReward,
+      stats: _player.stats.copyWith(
+        hp: battle.playerHp,
+        spirit: battle.playerSpirit,
+      ),
+    );
+    _log('击败 ${enemy.name}，获得 ${enemy.xpReward} 修为');
+
+    // Loot
+    if (enemy.loot.isNotEmpty && _rng.nextDouble() < 0.3) {
+      final lootId = enemy.loot[_rng.nextInt(enemy.loot.length)];
+      final added = _addItemById(lootId);
+      final item = ItemsRepository.get(lootId);
+      if (added && item != null) {
+        _log('拾取战利品：${item.name}');
+      }
+    }
+    _checkBreakthrough();
+  }
+
+  void _resolveBattleDefeat(Battle battle) {
+    final enemy = battle.enemy;
+    _player = _player.copyWith(
+      stats: _player.stats.copyWith(hp: 0, spirit: battle.playerSpirit),
+    );
+    _log('被 ${enemy.name} 击败，身受重伤！');
+  }
+
+  void closeBattle() {
+    _currentBattle = null;
+    notifyListeners();
   }
 
   void _findHerb() {
@@ -293,63 +448,6 @@ class GameState extends ChangeNotifier {
 
   void _encounterNpc() {
     _log('路过一名闭目修士，对方并未理你。');
-  }
-
-  BattleResult _simulateBattle(Enemy enemy) {
-    int playerHp = _player.stats.hp;
-    int enemyHp = enemy.stats.hp;
-    double playerSpirit = _player.stats.spirit.toDouble();
-    final playerAtkBase = (_player.stats.attack + _itemAttackBonus())
-        .toDouble();
-    final enemyAtk = enemy.stats.attack.toDouble();
-    final playerDef = (_player.stats.defense + _itemDefenseBonus()).toDouble();
-    final enemyDef = enemy.stats.defense.toDouble();
-
-    String? lootId;
-
-    for (int round = 0; round < 5; round++) {
-      final hasSpirit = playerSpirit >= 5;
-      final atkThisRound = hasSpirit ? playerAtkBase : playerAtkBase * 0.6;
-      if (hasSpirit) {
-        playerSpirit -= 5;
-      } else {
-        _log('Spirit low, attack weakened.');
-      }
-      final dmgToEnemy = max(1, (atkThisRound - enemyDef).round());
-      enemyHp -= dmgToEnemy;
-      if (enemyHp <= 0) {
-        lootId = enemy.loot.isNotEmpty
-            ? enemy.loot[_rng.nextInt(enemy.loot.length)]
-            : null;
-        return BattleResult(
-          victory: true,
-          playerHp: max(1, playerHp),
-          enemyHp: 0,
-          xpGained: enemy.xpReward,
-          playerSpirit: playerSpirit.round(),
-          lootedItemId: lootId,
-        );
-      }
-      final dmgToPlayer = max(1, (enemyAtk - playerDef).round());
-      playerHp -= dmgToPlayer;
-      if (playerHp <= 0) {
-        return BattleResult(
-          victory: false,
-          playerHp: 0,
-          enemyHp: enemyHp,
-          xpGained: 0,
-          playerSpirit: playerSpirit.round(),
-        );
-      }
-    }
-
-    return BattleResult(
-      victory: false,
-      playerHp: playerHp,
-      enemyHp: enemyHp,
-      xpGained: 0,
-      playerSpirit: playerSpirit.round(),
-    );
   }
 
   double _itemAttackBonus() {
@@ -366,48 +464,12 @@ class GameState extends ChangeNotifier {
     );
   }
 
-  Enemy _rollEnemy(int danger) {
-    if (danger >= 6) {
-      return Enemy(
-        name: '血牙狼王',
-        stats: const Stats(
-          maxHp: 70,
-          hp: 70,
-          maxSpirit: 30,
-          spirit: 30,
-          attack: 16,
-          defense: 6,
-          speed: 10,
-          insight: 0,
-        ),
-        loot: const ['rusty_sword', 'herb'],
-        xpReward: 20,
-      );
-    }
-    return Enemy(
-      name: '野猪',
-      stats: const Stats(
-        maxHp: 40,
-        hp: 40,
-        maxSpirit: 0,
-        spirit: 0,
-        attack: 10,
-        defense: 4,
-        speed: 6,
-        insight: 0,
-      ),
-      loot: const ['herb', 'cloth_robe'],
-      xpReward: 12,
-    );
+  List<MapNode> _seedMap() {
+    return MapsRepository.getAll();
   }
 
-  List<MapNode> _seedMap() {
-    return const [
-      MapNode(id: 'sect', name: '宗门后山', description: '安全区，可打坐与学习', danger: 1),
-      MapNode(id: 'forest', name: '后山竹林', description: '常见野兽出没', danger: 3),
-      MapNode(id: 'swamp', name: '迷雾沼泽', description: '瘴气重，危险较大', danger: 6),
-      MapNode(id: 'ruin', name: '破败遗迹', description: '听说有机缘，也有埋伏', danger: 7),
-    ];
+  Enemy _rollEnemy(int danger) {
+    return EnemiesRepository.rollEnemy(danger);
   }
 
   void _log(String message) {
@@ -443,6 +505,10 @@ class GameState extends ChangeNotifier {
     _logs = [];
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
+    // Reset Grid State
+    _playerGridPos = const Point(0, 0);
+    _visitedTiles = {_playerGridPos};
+
     _log('重开一局，新的人生开始。');
     notifyListeners();
   }

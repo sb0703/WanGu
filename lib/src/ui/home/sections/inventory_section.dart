@@ -25,7 +25,7 @@ class InventorySection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '储物袋',
+                '背包',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -60,7 +60,7 @@ class InventorySection extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '去探索获取材料吧',
+                    '去探索获得材料吧',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.disabledColor,
                     ),

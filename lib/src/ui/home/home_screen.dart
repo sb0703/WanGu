@@ -7,6 +7,7 @@ import 'sections/inventory_section.dart';
 import 'sections/map_section.dart';
 import 'sections/sect_section.dart';
 import 'sections/stats_section.dart';
+import 'widgets/battle_overlay.dart';
 import 'widgets/log_ticker.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -71,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Stack(
               children: [
                 IndexedStack(index: _index, children: tabs),
+                if (game.currentBattle != null) const BattleOverlay(),
                 if (isGameOver)
                   Container(
                     color: Colors.black.withValues(alpha: 0.55),
