@@ -14,6 +14,7 @@ class WangGuApp extends StatelessWidget {
       create: (_) => GameState(),
       child: MaterialApp(
         title: '万古墨境：红尘渡',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const HomeScreen(),
       ),

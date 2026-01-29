@@ -4,6 +4,7 @@ class BattleResult {
     required this.playerHp,
     required this.enemyHp,
     required this.xpGained,
+    required this.playerSpirit,
     this.lootedItemId,
   });
 
@@ -11,5 +12,6 @@ class BattleResult {
   final int playerHp;
   final int enemyHp;
   final int xpGained;
+  final int playerSpirit;
   final String? lootedItemId;
 }

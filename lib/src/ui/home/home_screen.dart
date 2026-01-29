@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
     final theme = Theme.of(context);
+    final isGameOver = game.isGameOver;
     final tabs = [
       const OverviewSection(),
       const CultivateSection(),
@@ -49,6 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   '寿元：${(game.player.lifespanHours / 24 / 365).toStringAsFixed(1)} 年',
                   style: theme.textTheme.labelSmall,
                 ),
+                if (isGameOver)
+                  Text(
+                    '已死亡/寿元耗尽',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -57,7 +66,19 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Expanded(
-            child: IndexedStack(index: _index, children: tabs),
+            child: Stack(
+              children: [
+                IndexedStack(index: _index, children: tabs),
+                if (isGameOver)
+                  Container(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    alignment: Alignment.center,
+                    child: _GameOverCard(
+                      onReset: () => context.read<GameState>().resetGame(),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           const LogPanel(),
@@ -89,6 +110,42 @@ class _HomeScreenState extends State<HomeScreen> {
             label: '背包',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GameOverCard extends StatelessWidget {
+  const _GameOverCard({required this.onReset});
+
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '寿元已尽，道消身死',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('你可以重返凡尘，重新开始修行。', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              icon: const Icon(Icons.restart_alt),
+              onPressed: onReset,
+              label: const Text('重开一局'),
+            ),
+          ],
+        ),
       ),
     );
   }

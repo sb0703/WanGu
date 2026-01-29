@@ -18,7 +18,9 @@ class InventorySection extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.5,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -45,8 +47,11 @@ class InventorySection extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.backpack_outlined,
-                      size: 64, color: theme.disabledColor.withValues(alpha: 0.3)),
+                  Icon(
+                    Icons.backpack_outlined,
+                    size: 64,
+                    color: theme.disabledColor.withValues(alpha: 0.3),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     '背包空空如也',
@@ -75,10 +80,17 @@ class InventorySection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(_icon(item.type), color: theme.colorScheme.primary),
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        child: Icon(
+                          _icon(item.type),
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
-                      title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(
+                        item.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(item.description),
                       trailing: PopupMenuButton<String>(
                         onSelected: (value) {

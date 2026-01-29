@@ -14,27 +14,28 @@ import '../models/world_clock.dart';
 
 class GameState extends ChangeNotifier {
   GameState()
-    : _rng = Random(),
-      _tick = 0,
-      _clock = const WorldClock(year: 1001, month: 1, day: 1, hour: 8),
-      _player = Player(
-        name: '无名散修',
-        stageIndex: 0,
-        xp: 0,
-        lifespanHours: 80 * 365 * 24, // 80年寿元
-        stats: const Stats(
-          maxHp: 80,
-          hp: 80,
-          spirit: 50,
-          attack: 12,
-          defense: 6,
-          speed: 8,
-          insight: 4,
+      : _rng = Random(),
+        _tick = 0,
+        _clock = const WorldClock(year: 1001, month: 1, day: 1, hour: 8),
+        _player = Player(
+          name: '无名散修',
+          stageIndex: 0,
+          xp: 0,
+          lifespanHours: 80 * 365 * 24, // 80年寿元
+          stats: const Stats(
+            maxHp: 80,
+            hp: 80,
+            maxSpirit: 50,
+            spirit: 50,
+            attack: 12,
+            defense: 6,
+            speed: 8,
+            insight: 4,
+          ),
+          inventory: const [],
+          equipped: const [],
         ),
-        inventory: const [],
-        equipped: const [],
-      ),
-      _logs = const [] {
+        _logs = const [] {
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
     _log('踏入修真界，起点：${_currentNode.name}');
@@ -46,7 +47,7 @@ class GameState extends ChangeNotifier {
   int _tick;
   WorldClock _clock;
   Player _player;
-  late final List<MapNode> _mapNodes;
+  late List<MapNode> _mapNodes;
   late MapNode _currentNode;
   List<LogEntry> _logs;
 
@@ -54,16 +55,23 @@ class GameState extends ChangeNotifier {
     'herb': const Item(
       id: 'herb',
       name: '疗伤草',
-      description: '嚼服可恢复气血。',
+      description: '服用可恢复气血。',
       type: ItemType.consumable,
       hpBonus: 25,
     ),
     'rusty_sword': const Item(
       id: 'rusty_sword',
-      name: '锈铁剑',
-      description: '破旧的武器，聊胜于无。',
+      name: '生锈铁剑',
+      description: '旧铁剑，聊胜于无。',
       type: ItemType.weapon,
       attackBonus: 5,
+    ),
+    'cloth_robe': const Item(
+      id: 'cloth_robe',
+      name: '粗布护衣',
+      description: '最简单的护身布衣，略有防护。',
+      type: ItemType.armor,
+      defenseBonus: 3,
     ),
   };
 
@@ -74,58 +82,60 @@ class GameState extends ChangeNotifier {
   MapNode get currentNode => _currentNode;
   List<MapNode> get mapNodes => List.unmodifiable(_mapNodes);
   List<LogEntry> get logs => List.unmodifiable(_logs);
-  Item? get equippedWeapon =>
-      _player.equipped.isEmpty ? null : _player.equipped.first;
+  Item? get equippedWeapon => _firstEquipped(ItemType.weapon);
+  Item? get equippedArmor => _firstEquipped(ItemType.armor);
   int get bagCapacity => _bagCapacity;
 
   bool get isDead => _player.lifespanHours <= 0 || _player.stats.hp <= 0;
+  bool get isGameOver => isDead;
+
+  Item? _firstEquipped(ItemType type) {
+    for (final item in _player.equipped) {
+      if (item.type == type) return item;
+    }
+    return null;
+  }
 
   void cultivate({int hours = 1}) {
-    if (isDead) {
-      return;
-    }
+    if (isDead) return;
     final gainedXp = 6 + _player.stats.insight;
     _player = _player.copyWith(xp: _player.xp + gainedXp);
     _advanceTime(hours);
-    _log('静坐修炼，获得 $gainedXp 修为');
+    _log('闭关修炼，获得 $gainedXp 修为');
     _checkBreakthrough();
     notifyListeners();
   }
 
   void moveTo(MapNode node) {
-    if (isDead) {
-      return;
-    }
+    if (isDead) return;
     _currentNode = node;
     _advanceTime(2);
-    _log('移动到【${node.name}】');
+    _log('移动到 ${node.name}');
     _triggerNodeEvent(node);
     notifyListeners();
   }
 
   void rest({int hours = 2}) {
-    if (isDead) {
-      return;
-    }
+    if (isDead) return;
     final newHp = (_player.stats.hp + 10 * hours).clamp(0, _player.stats.maxHp);
-    _player = _player.copyWith(stats: _player.stats.copyWith(hp: newHp));
+    final newSpirit = (_player.stats.spirit + 8 * hours).clamp(0, _player.stats.maxSpirit);
+    _player = _player.copyWith(
+      stats: _player.stats.copyWith(hp: newHp, spirit: newSpirit),
+    );
     _advanceTime(hours);
-    _log('调息休整，恢复体力');
+    _log('调息恢复，气血/灵力回复');
     notifyListeners();
   }
 
-  // Inventory operations
   bool _addItemById(String id) {
     final item = _catalog[id];
-    if (item == null) {
-      return false;
-    }
+    if (item == null) return false;
     return _addItem(item);
   }
 
   bool _addItem(Item item) {
     if (_player.inventory.length >= _bagCapacity) {
-      _log('背包已满，放弃了 ${item.name}');
+      _log('包裹已满，放弃了 ${item.name}');
       return false;
     }
     _player = _player.copyWith(inventory: [..._player.inventory, item]);
@@ -133,9 +143,7 @@ class GameState extends ChangeNotifier {
   }
 
   void discard(Item item) {
-    if (!_player.inventory.contains(item)) {
-      return;
-    }
+    if (!_player.inventory.contains(item)) return;
     final newInventory = [..._player.inventory]..remove(item);
     _player = _player.copyWith(inventory: newInventory);
     _log('丢弃了 ${item.name}');
@@ -143,40 +151,49 @@ class GameState extends ChangeNotifier {
   }
 
   void equipWeapon(Item item) {
-    if (item.type != ItemType.weapon || !_player.inventory.contains(item)) {
-      return;
-    }
+    if (item.type != ItemType.weapon || !_player.inventory.contains(item)) return;
     final currentWeapon = equippedWeapon;
     final newInventory = [..._player.inventory]..remove(item);
-    if (currentWeapon != null) {
-      newInventory.add(currentWeapon);
-    }
-    _player = _player.copyWith(inventory: newInventory, equipped: [item]);
-    _log(
-      '装备了 ${item.name}${currentWeapon != null ? '，替换掉 ${currentWeapon.name}' : ''}',
-    );
+    final newEquipped = [
+      ..._player.equipped.where((e) => e.type != ItemType.weapon),
+      item,
+    ];
+    if (currentWeapon != null) newInventory.add(currentWeapon);
+    _player = _player.copyWith(inventory: newInventory, equipped: newEquipped);
+    _log('装备了 ${item.name}${currentWeapon != null ? '，替换掉 ${currentWeapon.name}' : ''}');
+    notifyListeners();
+  }
+
+  void equipArmor(Item item) {
+    if (item.type != ItemType.armor || !_player.inventory.contains(item)) return;
+    final currentArmor = equippedArmor;
+    final newInventory = [..._player.inventory]..remove(item);
+    final newEquipped = [
+      ..._player.equipped.where((e) => e.type != ItemType.armor),
+      item,
+    ];
+    if (currentArmor != null) newInventory.add(currentArmor);
+    _player = _player.copyWith(inventory: newInventory, equipped: newEquipped);
+    _log('装备了 ${item.name}${currentArmor != null ? '，替换掉 ${currentArmor.name}' : ''}');
     notifyListeners();
   }
 
   void useConsumable(Item item) {
-    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) {
-      return;
-    }
+    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) return;
     final newStats = _player.stats.healHp(item.hpBonus);
     final newInventory = [..._player.inventory]..remove(item);
     _player = _player.copyWith(inventory: newInventory, stats: newStats);
-    _log('服用了 ${item.name}，气血恢复。');
+    _log('服用了 ${item.name}，气血恢复');
     notifyListeners();
   }
 
-  // --- Internal helpers ---
   void _advanceTime(int hours) {
     _tick += hours;
     _clock = _clock.tickHours(hours);
     final remainingLife = _player.lifespanHours - hours;
     _player = _player.copyWith(lifespanHours: remainingLife);
     if (remainingLife <= 0) {
-      _log('寿元耗尽，道消身死。');
+      _log('寿元耗尽，道途止于此。');
     }
   }
 
@@ -195,13 +212,17 @@ class GameState extends ChangeNotifier {
           maxHp: _player.stats.maxHp + next.hpBonus,
           hp: _player.stats.maxHp + next.hpBonus,
           attack: _player.stats.attack + next.attackBonus,
-          spirit: _player.stats.spirit + next.spiritBonus,
+          maxSpirit: _player.stats.maxSpirit + next.spiritBonus,
+          spirit: (_player.stats.spirit + next.spiritBonus).clamp(
+            0,
+            _player.stats.maxSpirit + next.spiritBonus,
+          ),
         ),
       );
-      _log('突破成功，迈入【${next.name}】！');
+      _log('突破成功，晋升 ${next.name}！');
     } else {
       _player = _player.copyWith(xp: currentRealm.maxXp ~/ 2);
-      _log('突破失败，修为受损，需要静养。');
+      _log('突破失败，受伤退修，需要重新积累。');
     }
   }
 
@@ -218,12 +239,15 @@ class GameState extends ChangeNotifier {
 
   void _encounterEnemy(MapNode node) {
     final enemy = _rollEnemy(node.danger);
-    _log('遭遇【${enemy.name}】！');
+    _log('遭遇 ${enemy.name}！');
     final result = _simulateBattle(enemy);
     if (result.victory) {
       _player = _player.copyWith(
         xp: _player.xp + result.xpGained,
-        stats: _player.stats.copyWith(hp: result.playerHp),
+        stats: _player.stats.copyWith(
+          hp: result.playerHp,
+          spirit: result.playerSpirit,
+        ),
       );
       _log('击败 ${enemy.name}，获得 ${result.xpGained} 修为');
       if (result.lootedItemId != null) {
@@ -236,36 +260,46 @@ class GameState extends ChangeNotifier {
       _checkBreakthrough();
     } else {
       _player = _player.copyWith(
-        stats: _player.stats.copyWith(hp: result.playerHp),
+        stats: _player.stats.copyWith(
+          hp: result.playerHp,
+          spirit: result.playerSpirit,
+        ),
       );
-      _log('战败！${enemy.name} 让你重伤，先回去休养。');
+      _log('战败，${enemy.name}令你重伤，先回去休整。');
     }
   }
 
   void _findHerb() {
     final added = _addItemById('herb');
     if (added) {
-      _log('在灌木丛中找到了一株疗伤草。');
+      _log('在林间采到了一株疗伤草。');
     }
   }
 
   void _encounterNpc() {
-    _log('路过一名闭关的修士，对方没有理你。');
+    _log('路过一名闭目修士，对方并未理你。');
   }
 
   BattleResult _simulateBattle(Enemy enemy) {
     int playerHp = _player.stats.hp;
     int enemyHp = enemy.stats.hp;
-    final playerAtk = (_player.stats.attack + _itemAttackBonus()).toDouble();
+    double playerSpirit = _player.stats.spirit.toDouble();
+    final playerAtkBase = (_player.stats.attack + _itemAttackBonus()).toDouble();
     final enemyAtk = enemy.stats.attack.toDouble();
-    final playerDef = _player.stats.defense.toDouble();
+    final playerDef = (_player.stats.defense + _itemDefenseBonus()).toDouble();
     final enemyDef = enemy.stats.defense.toDouble();
 
     String? lootId;
 
-    // 5 回合简化
     for (int round = 0; round < 5; round++) {
-      final dmgToEnemy = max(1, (playerAtk - enemyDef).round());
+      final hasSpirit = playerSpirit >= 5;
+      final atkThisRound = hasSpirit ? playerAtkBase : playerAtkBase * 0.6;
+      if (hasSpirit) {
+        playerSpirit -= 5;
+      } else {
+        _log('Spirit low, attack weakened.');
+      }
+      final dmgToEnemy = max(1, (atkThisRound - enemyDef).round());
       enemyHp -= dmgToEnemy;
       if (enemyHp <= 0) {
         lootId = enemy.loot.isNotEmpty
@@ -276,6 +310,7 @@ class GameState extends ChangeNotifier {
           playerHp: max(1, playerHp),
           enemyHp: 0,
           xpGained: enemy.xpReward,
+          playerSpirit: playerSpirit.round(),
           lootedItemId: lootId,
         );
       }
@@ -287,15 +322,17 @@ class GameState extends ChangeNotifier {
           playerHp: 0,
           enemyHp: enemyHp,
           xpGained: 0,
+          playerSpirit: playerSpirit.round(),
         );
       }
     }
-    // 超过5回合视为僵持，小退
+
     return BattleResult(
       victory: false,
       playerHp: playerHp,
       enemyHp: enemyHp,
       xpGained: 0,
+      playerSpirit: playerSpirit.round(),
     );
   }
 
@@ -306,13 +343,21 @@ class GameState extends ChangeNotifier {
     );
   }
 
+  double _itemDefenseBonus() {
+    return _player.equipped.fold<double>(
+      0,
+      (sum, item) => sum + item.defenseBonus,
+    );
+  }
+
   Enemy _rollEnemy(int danger) {
     if (danger >= 6) {
       return Enemy(
-        name: '狂暴妖狼',
+        name: '血牙狼王',
         stats: const Stats(
           maxHp: 70,
           hp: 70,
+          maxSpirit: 30,
           spirit: 30,
           attack: 16,
           defense: 6,
@@ -324,35 +369,85 @@ class GameState extends ChangeNotifier {
       );
     }
     return Enemy(
-      name: '山野野猪',
+      name: '野猪',
       stats: const Stats(
         maxHp: 40,
         hp: 40,
+        maxSpirit: 0,
         spirit: 0,
         attack: 10,
         defense: 4,
         speed: 6,
         insight: 0,
       ),
-      loot: const ['herb'],
+      loot: const ['herb', 'cloth_robe'],
       xpReward: 12,
     );
   }
 
   List<MapNode> _seedMap() {
     return const [
-      MapNode(id: 'sect', name: '宗门山门', description: '安全区，可休整与学习', danger: 1),
-      MapNode(id: 'forest', name: '后山密林', description: '常见野兽出没', danger: 3),
-      MapNode(id: 'swamp', name: '迷雾泽地', description: '湿气浓重，妖兽较多', danger: 6),
-      MapNode(id: 'ruin', name: '废弃古庙', description: '传闻藏有奇遇，也潜伏危险', danger: 7),
+      MapNode(
+        id: 'sect',
+        name: '宗门后山',
+        description: '安全区，可打坐与学习',
+        danger: 1,
+      ),
+      MapNode(
+        id: 'forest',
+        name: '后山竹林',
+        description: '常见野兽出没',
+        danger: 3,
+      ),
+      MapNode(
+        id: 'swamp',
+        name: '迷雾沼泽',
+        description: '瘴气重，危险较大',
+        danger: 6,
+      ),
+      MapNode(
+        id: 'ruin',
+        name: '破败遗迹',
+        description: '听说有机缘，也有埋伏',
+        danger: 7,
+      ),
     ];
   }
 
   void _log(String message) {
-    final newLogs = [..._logs, LogEntry(message, tick: _tick)];
+    final stamped = '[${_clock.shortLabel()}] $message';
+    final newLogs = [..._logs, LogEntry(stamped, tick: _tick)];
     // 只保留最近 80 条
     _logs = newLogs.length > 80
         ? newLogs.sublist(newLogs.length - 80)
         : newLogs;
+  }
+
+  void resetGame() {
+    _tick = 0;
+    _clock = const WorldClock(year: 1001, month: 1, day: 1, hour: 8);
+    _player = Player(
+      name: '无名散修',
+      stageIndex: 0,
+      xp: 0,
+      lifespanHours: 80 * 365 * 24,
+      stats: const Stats(
+        maxHp: 80,
+        hp: 80,
+        maxSpirit: 50,
+        spirit: 50,
+        attack: 12,
+        defense: 6,
+        speed: 8,
+        insight: 4,
+      ),
+      inventory: const [],
+      equipped: const [],
+    );
+    _logs = [];
+    _mapNodes = _seedMap();
+    _currentNode = _mapNodes.first;
+    _log('重开一局，新的人生开始。');
+    notifyListeners();
   }
 }

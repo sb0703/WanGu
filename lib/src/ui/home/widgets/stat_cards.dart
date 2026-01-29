@@ -55,8 +55,7 @@ class StatCards extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           crossAxisCount: crossAxisCount,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          crossAxisSpacing: 10,
           childAspectRatio: 2.0,
           children: cards,
         );
@@ -84,7 +83,7 @@ class _Tile extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
