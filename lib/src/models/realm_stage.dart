@@ -16,28 +16,28 @@ class RealmStage {
   static const stages = <RealmStage>[
     RealmStage(
       name: '练气',
-      maxXp: 100,
+      maxXp: 200,
       hpBonus: 0,
       attackBonus: 0,
       spiritBonus: 0,
     ),
     RealmStage(
       name: '筑基',
-      maxXp: 250,
+      maxXp: 1000,
       hpBonus: 30,
       attackBonus: 5,
       spiritBonus: 20,
     ),
     RealmStage(
       name: '金丹',
-      maxXp: 600,
+      maxXp: 5000,
       hpBonus: 80,
       attackBonus: 12,
       spiritBonus: 60,
     ),
     RealmStage(
       name: '元婴',
-      maxXp: 1200,
+      maxXp: 20000,
       hpBonus: 150,
       attackBonus: 25,
       spiritBonus: 120,

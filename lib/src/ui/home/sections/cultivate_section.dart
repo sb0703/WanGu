@@ -10,8 +10,9 @@ class CultivateSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
     final theme = Theme.of(context);
-    final realm = game.player.realm;
-    final progress = realm.maxXp > 0 ? game.player.xp / realm.maxXp : 0.0;
+    final player = game.player;
+    final maxXp = player.currentMaxXp;
+    final progress = maxXp > 0 ? player.xp / maxXp : 0.0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -32,7 +33,7 @@ class CultivateSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    realm.name,
+                    player.realmLabel,
                     style: theme.textTheme.headlineLarge?.copyWith(
                       fontSize: 36,
                     ),
@@ -49,7 +50,7 @@ class CultivateSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '修为：${game.player.xp} / ${realm.maxXp}',
+                    '修为：${player.xp} / $maxXp',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -61,31 +62,86 @@ class CultivateSection extends StatelessWidget {
           // Actions
           Text('修炼方式', style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _CultivateActionCard(
-                  title: '静坐修炼',
-                  subtitle: '1 天',
-                  icon: Icons.self_improvement,
-                  onTap: game.isDead
-                      ? null
-                      : () => context.read<GameState>().cultivate(days: 1),
+
+          if (progress >= 1.0)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: game.isDead
+                    ? null
+                    : () => context.read<GameState>().attemptBreakthrough(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.amber[700],
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                ),
+                icon: const Icon(Icons.bolt, size: 28),
+                label: const Text(
+                  '尝试突破',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _CultivateActionCard(
-                  title: '闭关突破',
-                  subtitle: '6 天',
-                  icon: Icons.bedtime,
-                  onTap: game.isDead
-                      ? null
-                      : () => context.read<GameState>().cultivate(days: 6),
+            )
+          else
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CultivateActionCard(
+                        title: '静坐修炼',
+                        subtitle: '1 天 (纯度-)',
+                        icon: Icons.self_improvement,
+                        onTap: game.isDead
+                            ? null
+                            : () =>
+                                  context.read<GameState>().cultivate(days: 1),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _CultivateActionCard(
+                        title: '深度闭关',
+                        subtitle: '7 天 (纯度---)',
+                        icon: Icons.bedtime,
+                        onTap: game.isDead
+                            ? null
+                            : () =>
+                                  context.read<GameState>().cultivate(days: 7),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _CultivateActionCard(
+                        title: '运功排毒',
+                        subtitle: '1 天 (纯度+)',
+                        icon: Icons.water_drop,
+                        color: Colors.teal,
+                        onTap: game.isDead
+                            ? null
+                            : () => context.read<GameState>().purify(days: 1),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _CultivateActionCard(
+                        title: '洗髓伐骨',
+                        subtitle: '7 天 (纯度+++)',
+                        icon: Icons.spa,
+                        color: Colors.teal[700],
+                        onTap: game.isDead
+                            ? null
+                            : () => context.read<GameState>().purify(days: 7),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
 
           const SizedBox(height: 24),
 
@@ -140,18 +196,21 @@ class _CultivateActionCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final VoidCallback? onTap;
+  final Color? color;
 
   const _CultivateActionCard({
     required this.title,
     required this.subtitle,
     required this.icon,
     this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEnabled = onTap != null;
+    final cardColor = color ?? theme.colorScheme.primary;
 
     return Material(
       color: Colors.transparent,
@@ -160,12 +219,12 @@ class _CultivateActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Ink(
           decoration: BoxDecoration(
-            color: isEnabled ? theme.colorScheme.primary : theme.disabledColor,
+            color: isEnabled ? cardColor : theme.disabledColor,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               if (isEnabled)
                 BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  color: cardColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

@@ -36,6 +36,7 @@ class GameState extends ChangeNotifier {
           defense: 6,
           speed: 8,
           insight: 4,
+          purity: 100,
         ),
         inventory: const [],
         equipped: const [],
@@ -70,6 +71,15 @@ class GameState extends ChangeNotifier {
   Npc? _currentInteractionNpc;
   Npc? get currentInteractionNpc => _currentInteractionNpc;
 
+  // Breakthrough State
+  bool _showingBreakthrough = false;
+  bool _breakthroughSuccess = false;
+  String _breakthroughMessage = '';
+
+  bool get showingBreakthrough => _showingBreakthrough;
+  bool get breakthroughSuccess => _breakthroughSuccess;
+  String get breakthroughMessage => _breakthroughMessage;
+
   // Getters for exploration
   Point<int> get playerGridPos => _playerGridPos;
   Set<Point<int>> get visitedTiles => _visitedTiles;
@@ -102,14 +112,81 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
+  // Cultivate: Absorb Qi (Increases XP, Decreases Purity)
   void cultivate({int days = 1}) {
     if (isDead) return;
-    final gainedXp = 6 + _player.stats.insight;
-    _player = _player.copyWith(xp: _player.xp + gainedXp);
+
+    // Check if player reached max XP for current realm level
+    final maxXp = _player.currentMaxXp;
+    if (_player.xp >= maxXp) {
+      _advanceTime(days);
+      _log('修为已至瓶颈，无法寸进，需闭关突破。');
+      notifyListeners();
+      return;
+    }
+
+    // Base XP gain
+    int baseGain = 6 + _player.stats.insight;
+
+    // Decrease XP gain based on stage index (Diminishing returns)
+    double efficiency = (1.0 - (_player.stageIndex * 0.2)).clamp(0.1, 1.0);
+
+    int gainedXp = (baseGain * efficiency * days).toInt(); // Scaled by days
+    if (gainedXp < 1) gainedXp = 1;
+
+    // Purity Penalty: -1 per day (Base)
+    // Higher insight might reduce impurity intake slightly? No, let's keep it simple.
+    int purityLoss = 1 * days;
+
+    // Cap XP at max
+    int newXp = _player.xp + gainedXp;
+    if (newXp > maxXp) {
+      newXp = maxXp;
+    }
+
+    // Apply stats changes
+    _player = _player.copyWith(
+      xp: newXp,
+      stats: _player.stats.copyWith(
+        purity: (_player.stats.purity - purityLoss).clamp(0, 100),
+      ),
+    );
+
     _advanceTime(days);
-    _log('闭关修炼，获得 $gainedXp 修为');
-    _checkBreakthrough();
+    _log('纳气修炼 $days 天，修为+$gainedXp，纯度-$purityLoss');
     notifyListeners();
+  }
+
+  // Purify: Remove Impurity (No XP, Increases Purity)
+  void purify({int days = 1}) {
+    if (isDead) return;
+
+    if (_player.stats.purity >= 100) {
+      _advanceTime(days);
+      _log('灵气已纯净无暇，无需提纯。');
+      notifyListeners();
+      return;
+    }
+
+    // Base Purity Gain
+    // Insight helps purify faster
+    int baseRecovery = 2 + (_player.stats.insight ~/ 5);
+    int totalRecovery = baseRecovery * days;
+
+    _player = _player.copyWith(
+      stats: _player.stats.copyWith(
+        purity: (_player.stats.purity + totalRecovery).clamp(0, 100),
+      ),
+    );
+
+    _advanceTime(days);
+    _log('运功化煞 $days 天，纯度+$totalRecovery');
+    notifyListeners();
+  }
+
+  /// Manually trigger breakthrough attempt
+  void attemptBreakthrough() {
+    _checkBreakthrough();
   }
 
   /// Enter a new region (travel)
@@ -267,32 +344,118 @@ class GameState extends ChangeNotifier {
   }
 
   void _checkBreakthrough() {
-    final currentRealm = _player.realm;
-    if (_player.xp < currentRealm.maxXp) return;
-    final successRate = 0.72 + _player.stats.insight * 0.02;
-    final success = _rng.nextDouble() < successRate;
-    if (success && _player.stageIndex < RealmStage.stages.length - 1) {
-      final nextStageIndex = _player.stageIndex + 1;
-      final next = RealmStage.stages[nextStageIndex];
-      _player = _player.copyWith(
-        stageIndex: nextStageIndex,
-        xp: 0,
-        stats: _player.stats.copyWith(
-          maxHp: _player.stats.maxHp + next.hpBonus,
-          hp: _player.stats.maxHp + next.hpBonus,
-          attack: _player.stats.attack + next.attackBonus,
-          maxSpirit: _player.stats.maxSpirit + next.spiritBonus,
-          spirit: (_player.stats.spirit + next.spiritBonus).clamp(
-            0,
-            _player.stats.maxSpirit + next.spiritBonus,
-          ),
-        ),
-      );
-      _log('突破成功，晋升 ${next.name}！');
+    final maxXp = _player.currentMaxXp;
+    if (_player.xp < maxXp) return;
+
+    final isMajorBreakthrough = _player.level >= 10;
+
+    // Check for consumables that help breakthrough (simple check for now)
+    // In future, we can prompt user to use items.
+
+    // Base success rate
+    double successRate = 0.72 + _player.stats.insight * 0.02;
+
+    // PURITY MODIFIER: The core of the new mechanic
+    // Success Rate *= (Purity / 100)
+    // Example: 100 purity -> 100% of base rate
+    //          50 purity -> 50% of base rate (Huge penalty)
+    final purityFactor = _player.stats.purity / 100.0;
+    successRate *= purityFactor;
+
+    if (isMajorBreakthrough) {
+      // Major Breakthrough (Stage Change) is harder
+      successRate *= 0.6;
+
+      // REQUIREMENT: Must have a "Breahthrough Item" for major realms?
+      // For now, let's just make it hard.
+      // Or check for "Foundation Pill" if going to Foundation.
+      // Simple implementation: If no pill, very low chance.
+
+      // Let's assume player uses best pill automatically for now (to be improved in UI)
+      final hasPill =
+          _player.inventory.any(
+            (i) => i.id == 'foundation_pill' && _player.stageIndex == 0,
+          ) ||
+          _player.inventory.any(
+            (i) => i.id == 'qi_pill' && _player.stageIndex == -1,
+          ); // Just example
+
+      if (hasPill) successRate += 0.3;
     } else {
-      _player = _player.copyWith(xp: currentRealm.maxXp ~/ 2);
-      _log('突破失败，受伤退修，需要重新积累。');
+      // Minor Breakthrough (Level Up) is easier
+      successRate = 0.9 + _player.stats.insight * 0.01;
     }
+
+    // Cap rate
+    successRate = successRate.clamp(0.1, 0.95);
+
+    final success = _rng.nextDouble() < successRate;
+
+    _showingBreakthrough = true;
+    _breakthroughSuccess = success;
+
+    if (success) {
+      if (isMajorBreakthrough) {
+        // Major Breakthrough: Next Stage, Level 1
+        if (_player.stageIndex < RealmStage.stages.length - 1) {
+          final nextStageIndex = _player.stageIndex + 1;
+          final next = RealmStage.stages[nextStageIndex];
+          _player = _player.copyWith(
+            stageIndex: nextStageIndex,
+            level: 1,
+            xp: 0,
+            stats: _player.stats.copyWith(
+              maxHp: _player.stats.maxHp + next.hpBonus,
+              hp: _player.stats.maxHp + next.hpBonus,
+              attack: _player.stats.attack + next.attackBonus,
+              maxSpirit: _player.stats.maxSpirit + next.spiritBonus,
+              spirit: (_player.stats.spirit + next.spiritBonus).clamp(
+                0,
+                _player.stats.maxSpirit + next.spiritBonus,
+              ),
+            ),
+          );
+          _breakthroughMessage =
+              '天道酬勤，突破大境界！\n晋升 ${next.name}！\n气血+${next.hpBonus} 攻击+${next.attackBonus}';
+          _log('突破成功，晋升 ${next.name}！');
+        } else {
+          _breakthroughMessage = '已至世界巅峰，无法再进！';
+        }
+      } else {
+        // Minor Breakthrough: Same Stage, Next Level
+        final newLevel = _player.level + 1;
+        // Minor stats boost
+        final hpBoost = 10 + _player.stageIndex * 5;
+        final atkBoost = 2 + _player.stageIndex;
+
+        _player = _player.copyWith(
+          level: newLevel,
+          xp: 0,
+          stats: _player.stats.copyWith(
+            maxHp: _player.stats.maxHp + hpBoost,
+            hp: _player.stats.maxHp + hpBoost,
+            attack: _player.stats.attack + atkBoost,
+          ),
+        );
+        _breakthroughMessage =
+            '突破成功，达到 ${_player.realmLabel}！\n气血+$hpBoost 攻击+$atkBoost';
+        _log('小境界突破成功，达到 ${_player.realmLabel}！');
+      }
+    } else {
+      // Penalty: Lose XP
+      final penaltyXp = (maxXp * 0.3).toInt();
+      _player = _player.copyWith(xp: _player.xp - penaltyXp);
+      _breakthroughMessage = isMajorBreakthrough
+          ? '破境失败，心魔反噬！\n修为损失 $penaltyXp'
+          : '突破失败，气息紊乱。\n修为损失 $penaltyXp';
+      _log('突破失败，元气受损，修为倒退。');
+    }
+    notifyListeners();
+  }
+
+  void closeBreakthrough() {
+    _showingBreakthrough = false;
+    notifyListeners();
   }
 
   void _triggerNodeEvent(MapNode node) {
@@ -533,33 +696,36 @@ class GameState extends ChangeNotifier {
 
   void resetGame() {
     _tick = 0;
-    _clock = const WorldClock(year: 1001, month: 1, day: 1);
-    _player = Player(
-      name: '无名散修',
+    _clock = const WorldClock(year: 1, month: 1, day: 1);
+    _player = const Player(
+      name: '韩立',
       stageIndex: 0,
-      xp: 0,
-      lifespanDays: 80 * 365,
-      stats: const Stats(
-        maxHp: 80,
-        hp: 80,
+      level: 1,
+      stats: Stats(
+        maxHp: 100,
+        hp: 100,
         maxSpirit: 50,
         spirit: 50,
-        attack: 12,
-        defense: 6,
-        speed: 8,
-        insight: 4,
+        attack: 10,
+        defense: 5,
+        speed: 10,
+        insight: 10,
+        purity: 100,
       ),
-      inventory: const [],
-      equipped: const [],
+      xp: 0,
+      lifespanDays: 36500, // 100 years
+      inventory: [],
+      equipped: [],
     );
-    _logs = [];
-    _mapNodes = _seedMap();
+    _mapNodes = MapsRepository.getAll();
     _currentNode = _mapNodes.first;
-    // Reset Grid State
+    _logs = [LogEntry('大道争锋，我辈修士当逆天而行。', tick: 0)];
     _playerGridPos = const Point(0, 0);
     _visitedTiles = {_playerGridPos};
-
-    _log('重开一局，新的人生开始。');
+    _currentBattle = null;
+    _currentInteractionNpc = null;
+    _showingBreakthrough = false;
+    _breakthroughSuccess = false;
     notifyListeners();
   }
 }

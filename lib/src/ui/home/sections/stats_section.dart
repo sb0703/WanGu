@@ -26,6 +26,66 @@ class StatsSection extends StatelessWidget {
   }
 }
 
+class _PurityBar extends StatelessWidget {
+  const _PurityBar({required this.purity, required this.theme});
+
+  final int purity;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine color based on purity
+    Color color;
+    if (purity >= 80) {
+      color = Colors.green;
+    } else if (purity >= 50) {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.water_drop,
+              size: 16,
+              color: theme.colorScheme.secondary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '灵气纯度',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '$purity%',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: purity / 100.0,
+            minHeight: 6,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CharacterStatusCard extends StatelessWidget {
   const _CharacterStatusCard({required this.player, required this.game});
 
@@ -104,17 +164,17 @@ class _CharacterStatusCard extends StatelessWidget {
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
+                                  horizontal: 10,
+                                  vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: theme.colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  realm.name,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onPrimary,
+                                  player.realmLabel,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.onPrimaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -122,19 +182,19 @@ class _CharacterStatusCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            '当前位置：${game.currentNode.name}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          _StatusRow(
+                            icon: Icons.access_time,
+                            label: '寿元 $lifeYears 年',
+                            theme: theme,
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            '寿元剩余：$lifeYears 年',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          _StatusRow(
+                            icon: Icons.bolt,
+                            label: '修为 ${player.xp}/${player.currentMaxXp}',
+                            theme: theme,
                           ),
+                          const SizedBox(height: 4),
+                          _PurityBar(purity: player.stats.purity, theme: theme),
                         ],
                       ),
                     ),
@@ -172,6 +232,34 @@ class _CharacterStatusCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.icon,
+    required this.label,
+    required this.theme,
+  });
+
+  final IconData icon;
+  final String label;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: theme.colorScheme.secondary),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

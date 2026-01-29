@@ -8,6 +8,7 @@ class Stats {
     required this.defense,
     required this.speed,
     required this.insight,
+    this.purity = 100, // 灵气纯度 0-100
   });
 
   final int maxHp;
@@ -18,6 +19,7 @@ class Stats {
   final int defense;
   final int speed;
   final int insight; // 悟性或经验效率
+  final int purity;
 
   Stats healHp(int value) => copyWith(hp: (hp + value).clamp(0, maxHp));
 
@@ -38,6 +40,7 @@ class Stats {
     int? defense,
     int? speed,
     int? insight,
+    int? purity,
   }) {
     return Stats(
       maxHp: maxHp ?? this.maxHp,
@@ -48,6 +51,7 @@ class Stats {
       defense: defense ?? this.defense,
       speed: speed ?? this.speed,
       insight: insight ?? this.insight,
+      purity: purity ?? this.purity,
     );
   }
 }
