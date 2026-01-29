@@ -11,51 +11,113 @@ class InventorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
     final items = game.player.inventory;
+    final theme = Theme.of(context);
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Text('容量：${items.length}/${game.bagCapacity}'),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '储物袋',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '容量：${items.length}/${game.bagCapacity}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: items.length >= game.bagCapacity
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.secondary,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
         if (items.isEmpty)
-          const Expanded(child: Center(child: Text('背包空空如也，去探索获取材料吧。')))
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.backpack_outlined,
+                      size: 64, color: theme.disabledColor.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    '背包空空如也',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.disabledColor,
+                    ),
+                  ),
+                  Text(
+                    '去探索获取材料吧',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.disabledColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
         else
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
               itemBuilder: (context, index) {
                 final item = items[index];
-                return ListTile(
-                  leading: Icon(_icon(item.type)),
-                  title: Text(item.name),
-                  subtitle: Text(item.description),
-                  trailing: Wrap(
-                    spacing: 8,
-                    children: [
-                      if (item.type == ItemType.consumable)
-                        TextButton(
-                          onPressed: () =>
-                              context.read<GameState>().useConsumable(item),
-                          child: const Text('使用'),
-                        ),
-                      if (item.type == ItemType.weapon)
-                        TextButton(
-                          onPressed: () =>
-                              context.read<GameState>().equipWeapon(item),
-                          child: const Text('装备'),
-                        ),
-                      TextButton(
-                        onPressed: () =>
-                            context.read<GameState>().discard(item),
-                        child: const Text('丢弃'),
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        child: Icon(_icon(item.type), color: theme.colorScheme.primary),
                       ),
-                    ],
+                      title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(item.description),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'use':
+                              context.read<GameState>().useConsumable(item);
+                              break;
+                            case 'equip':
+                              context.read<GameState>().equipWeapon(item);
+                              break;
+                            case 'discard':
+                              context.read<GameState>().discard(item);
+                              break;
+                          }
+                        },
+                        itemBuilder: (BuildContext context) {
+                          return [
+                            if (item.type == ItemType.consumable)
+                              const PopupMenuItem(
+                                value: 'use',
+                                child: Text('使用'),
+                              ),
+                            if (item.type == ItemType.weapon)
+                              const PopupMenuItem(
+                                value: 'equip',
+                                child: Text('装备'),
+                              ),
+                            const PopupMenuItem(
+                              value: 'discard',
+                              child: Text('丢弃'),
+                            ),
+                          ];
+                        },
+                      ),
+                    ),
                   ),
                 );
               },
-              separatorBuilder: (context, _) => const Divider(height: 1),
+              separatorBuilder: (context, _) => const SizedBox(height: 4),
               itemCount: items.length,
             ),
           ),
@@ -66,11 +128,11 @@ class InventorySection extends StatelessWidget {
   IconData _icon(ItemType type) {
     switch (type) {
       case ItemType.weapon:
-        return Icons.gavel;
+        return Icons.hardware; // Better sword icon alternative
       case ItemType.armor:
         return Icons.shield;
       case ItemType.consumable:
-        return Icons.medical_services;
+        return Icons.local_pharmacy; // Better pill/medicine icon
     }
   }
 }
