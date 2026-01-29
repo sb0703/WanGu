@@ -43,13 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '时刻：${game.clock.shortLabel()}',
+                  '日期：${game.clock.shortLabel()}',
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '寿元：${(game.player.lifespanHours / 24 / 365).toStringAsFixed(1)} 年',
+                  '寿元：${(game.player.lifespanDays / 365).toStringAsFixed(1)} 年',
                   style: theme.textTheme.labelSmall,
                 ),
                 if (isGameOver)

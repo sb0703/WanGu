@@ -14,28 +14,28 @@ import '../models/world_clock.dart';
 
 class GameState extends ChangeNotifier {
   GameState()
-      : _rng = Random(),
-        _tick = 0,
-        _clock = const WorldClock(year: 1001, month: 1, day: 1, hour: 8),
-        _player = Player(
-          name: '无名散修',
-          stageIndex: 0,
-          xp: 0,
-          lifespanHours: 80 * 365 * 24, // 80年寿元
-          stats: const Stats(
-            maxHp: 80,
-            hp: 80,
-            maxSpirit: 50,
-            spirit: 50,
-            attack: 12,
-            defense: 6,
-            speed: 8,
-            insight: 4,
-          ),
-          inventory: const [],
-          equipped: const [],
+    : _rng = Random(),
+      _tick = 0,
+      _clock = const WorldClock(year: 1001, month: 1, day: 1),
+      _player = Player(
+        name: '无名散修',
+        stageIndex: 0,
+        xp: 0,
+        lifespanDays: 80 * 365, // 80年寿元（按天）
+        stats: const Stats(
+          maxHp: 80,
+          hp: 80,
+          maxSpirit: 50,
+          spirit: 50,
+          attack: 12,
+          defense: 6,
+          speed: 8,
+          insight: 4,
         ),
-        _logs = const [] {
+        inventory: const [],
+        equipped: const [],
+      ),
+      _logs = const [] {
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
     _log('踏入修真界，起点：${_currentNode.name}');
@@ -86,7 +86,7 @@ class GameState extends ChangeNotifier {
   Item? get equippedArmor => _firstEquipped(ItemType.armor);
   int get bagCapacity => _bagCapacity;
 
-  bool get isDead => _player.lifespanHours <= 0 || _player.stats.hp <= 0;
+  bool get isDead => _player.lifespanDays <= 0 || _player.stats.hp <= 0;
   bool get isGameOver => isDead;
 
   Item? _firstEquipped(ItemType type) {
@@ -96,11 +96,11 @@ class GameState extends ChangeNotifier {
     return null;
   }
 
-  void cultivate({int hours = 1}) {
+  void cultivate({int days = 1}) {
     if (isDead) return;
     final gainedXp = 6 + _player.stats.insight;
     _player = _player.copyWith(xp: _player.xp + gainedXp);
-    _advanceTime(hours);
+    _advanceTime(days);
     _log('闭关修炼，获得 $gainedXp 修为');
     _checkBreakthrough();
     notifyListeners();
@@ -115,14 +115,17 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void rest({int hours = 2}) {
+  void rest({int days = 2}) {
     if (isDead) return;
-    final newHp = (_player.stats.hp + 10 * hours).clamp(0, _player.stats.maxHp);
-    final newSpirit = (_player.stats.spirit + 8 * hours).clamp(0, _player.stats.maxSpirit);
+    final newHp = (_player.stats.hp + 10 * days).clamp(0, _player.stats.maxHp);
+    final newSpirit = (_player.stats.spirit + 8 * days).clamp(
+      0,
+      _player.stats.maxSpirit,
+    );
     _player = _player.copyWith(
       stats: _player.stats.copyWith(hp: newHp, spirit: newSpirit),
     );
-    _advanceTime(hours);
+    _advanceTime(days);
     _log('调息恢复，气血/灵力回复');
     notifyListeners();
   }
@@ -143,7 +146,9 @@ class GameState extends ChangeNotifier {
   }
 
   void discard(Item item) {
-    if (!_player.inventory.contains(item)) return;
+    if (!_player.inventory.contains(item)) {
+      return;
+    }
     final newInventory = [..._player.inventory]..remove(item);
     _player = _player.copyWith(inventory: newInventory);
     _log('丢弃了 ${item.name}');
@@ -151,7 +156,9 @@ class GameState extends ChangeNotifier {
   }
 
   void equipWeapon(Item item) {
-    if (item.type != ItemType.weapon || !_player.inventory.contains(item)) return;
+    if (item.type != ItemType.weapon || !_player.inventory.contains(item)) {
+      return;
+    }
     final currentWeapon = equippedWeapon;
     final newInventory = [..._player.inventory]..remove(item);
     final newEquipped = [
@@ -160,12 +167,16 @@ class GameState extends ChangeNotifier {
     ];
     if (currentWeapon != null) newInventory.add(currentWeapon);
     _player = _player.copyWith(inventory: newInventory, equipped: newEquipped);
-    _log('装备了 ${item.name}${currentWeapon != null ? '，替换掉 ${currentWeapon.name}' : ''}');
+    _log(
+      '装备了 ${item.name}${currentWeapon != null ? '，替换掉 ${currentWeapon.name}' : ''}',
+    );
     notifyListeners();
   }
 
   void equipArmor(Item item) {
-    if (item.type != ItemType.armor || !_player.inventory.contains(item)) return;
+    if (item.type != ItemType.armor || !_player.inventory.contains(item)) {
+      return;
+    }
     final currentArmor = equippedArmor;
     final newInventory = [..._player.inventory]..remove(item);
     final newEquipped = [
@@ -174,12 +185,16 @@ class GameState extends ChangeNotifier {
     ];
     if (currentArmor != null) newInventory.add(currentArmor);
     _player = _player.copyWith(inventory: newInventory, equipped: newEquipped);
-    _log('装备了 ${item.name}${currentArmor != null ? '，替换掉 ${currentArmor.name}' : ''}');
+    _log(
+      '装备了 ${item.name}${currentArmor != null ? '，替换掉 ${currentArmor.name}' : ''}',
+    );
     notifyListeners();
   }
 
   void useConsumable(Item item) {
-    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) return;
+    if (item.type != ItemType.consumable || !_player.inventory.contains(item)) {
+      return;
+    }
     final newStats = _player.stats.healHp(item.hpBonus);
     final newInventory = [..._player.inventory]..remove(item);
     _player = _player.copyWith(inventory: newInventory, stats: newStats);
@@ -187,11 +202,11 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _advanceTime(int hours) {
-    _tick += hours;
-    _clock = _clock.tickHours(hours);
-    final remainingLife = _player.lifespanHours - hours;
-    _player = _player.copyWith(lifespanHours: remainingLife);
+  void _advanceTime(int days) {
+    _tick += days;
+    _clock = _clock.tickDays(days);
+    final remainingLife = _player.lifespanDays - days;
+    _player = _player.copyWith(lifespanDays: remainingLife);
     if (remainingLife <= 0) {
       _log('寿元耗尽，道途止于此。');
     }
@@ -284,7 +299,8 @@ class GameState extends ChangeNotifier {
     int playerHp = _player.stats.hp;
     int enemyHp = enemy.stats.hp;
     double playerSpirit = _player.stats.spirit.toDouble();
-    final playerAtkBase = (_player.stats.attack + _itemAttackBonus()).toDouble();
+    final playerAtkBase = (_player.stats.attack + _itemAttackBonus())
+        .toDouble();
     final enemyAtk = enemy.stats.attack.toDouble();
     final playerDef = (_player.stats.defense + _itemDefenseBonus()).toDouble();
     final enemyDef = enemy.stats.defense.toDouble();
@@ -387,30 +403,10 @@ class GameState extends ChangeNotifier {
 
   List<MapNode> _seedMap() {
     return const [
-      MapNode(
-        id: 'sect',
-        name: '宗门后山',
-        description: '安全区，可打坐与学习',
-        danger: 1,
-      ),
-      MapNode(
-        id: 'forest',
-        name: '后山竹林',
-        description: '常见野兽出没',
-        danger: 3,
-      ),
-      MapNode(
-        id: 'swamp',
-        name: '迷雾沼泽',
-        description: '瘴气重，危险较大',
-        danger: 6,
-      ),
-      MapNode(
-        id: 'ruin',
-        name: '破败遗迹',
-        description: '听说有机缘，也有埋伏',
-        danger: 7,
-      ),
+      MapNode(id: 'sect', name: '宗门后山', description: '安全区，可打坐与学习', danger: 1),
+      MapNode(id: 'forest', name: '后山竹林', description: '常见野兽出没', danger: 3),
+      MapNode(id: 'swamp', name: '迷雾沼泽', description: '瘴气重，危险较大', danger: 6),
+      MapNode(id: 'ruin', name: '破败遗迹', description: '听说有机缘，也有埋伏', danger: 7),
     ];
   }
 
@@ -425,12 +421,12 @@ class GameState extends ChangeNotifier {
 
   void resetGame() {
     _tick = 0;
-    _clock = const WorldClock(year: 1001, month: 1, day: 1, hour: 8);
+    _clock = const WorldClock(year: 1001, month: 1, day: 1);
     _player = Player(
       name: '无名散修',
       stageIndex: 0,
       xp: 0,
-      lifespanHours: 80 * 365 * 24,
+      lifespanDays: 80 * 365,
       stats: const Stats(
         maxHp: 80,
         hp: 80,

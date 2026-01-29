@@ -66,22 +66,22 @@ class CultivateSection extends StatelessWidget {
               Expanded(
                 child: _CultivateActionCard(
                   title: '静坐修炼',
-                  subtitle: '1 小时',
+                  subtitle: '1 天',
                   icon: Icons.self_improvement,
                   onTap: game.isDead
                       ? null
-                      : () => context.read<GameState>().cultivate(hours: 1),
+                      : () => context.read<GameState>().cultivate(days: 1),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _CultivateActionCard(
                   title: '闭关突破',
-                  subtitle: '6 小时',
+                  subtitle: '6 天',
                   icon: Icons.bedtime,
                   onTap: game.isDead
                       ? null
-                      : () => context.read<GameState>().cultivate(hours: 6),
+                      : () => context.read<GameState>().cultivate(days: 6),
                 ),
               ),
             ],

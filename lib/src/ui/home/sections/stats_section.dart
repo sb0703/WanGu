@@ -12,7 +12,7 @@ class StatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
     final player = game.player;
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: ListView(
@@ -36,8 +36,8 @@ class _CharacterStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final realm = player.realm;
-    final lifeYears = (player.lifespanHours / 24 / 365).toStringAsFixed(1);
-    
+    final lifeYears = (player.lifespanDays / 365).toStringAsFixed(1);
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -75,7 +75,7 @@ class _CharacterStatusCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -86,7 +86,7 @@ class _CharacterStatusCard extends StatelessWidget {
                     // 头像区域
                     _Avatar(stageName: realm.name),
                     const SizedBox(width: 20),
-                    
+
                     // 核心信息
                     Expanded(
                       child: Column(
@@ -103,7 +103,10 @@ class _CharacterStatusCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.primary,
                                   borderRadius: BorderRadius.circular(4),
@@ -137,11 +140,11 @@ class _CharacterStatusCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
                 const Divider(),
                 const SizedBox(height: 16),
-                
+
                 // 装备栏
                 Row(
                   children: [
@@ -189,7 +192,7 @@ class _EquipmentItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -222,8 +225,12 @@ class _EquipmentItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: isEquipped ? FontWeight.w600 : FontWeight.normal,
-                    color: isEquipped ? theme.colorScheme.onSurface : theme.disabledColor,
+                    fontWeight: isEquipped
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: isEquipped
+                        ? theme.colorScheme.onSurface
+                        : theme.disabledColor,
                   ),
                 ),
               ],
@@ -249,10 +256,7 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: theme.colorScheme.primary,
-          width: 3,
-        ),
+        border: Border.all(color: theme.colorScheme.primary, width: 3),
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.primary.withValues(alpha: 0.2),

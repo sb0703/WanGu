@@ -8,7 +8,7 @@ class Player {
     required this.stageIndex,
     required this.stats,
     required this.xp,
-    required this.lifespanHours,
+    required this.lifespanDays,
     required this.inventory,
     required this.equipped,
   });
@@ -17,7 +17,7 @@ class Player {
   final int stageIndex;
   final Stats stats;
   final int xp;
-  final int lifespanHours;
+  final int lifespanDays;
   final List<Item> inventory;
   final List<Item> equipped;
 
@@ -28,7 +28,7 @@ class Player {
     int? stageIndex,
     Stats? stats,
     int? xp,
-    int? lifespanHours,
+    int? lifespanDays,
     List<Item>? inventory,
     List<Item>? equipped,
   }) {
@@ -37,7 +37,7 @@ class Player {
       stageIndex: stageIndex ?? this.stageIndex,
       stats: stats ?? this.stats,
       xp: xp ?? this.xp,
-      lifespanHours: lifespanHours ?? this.lifespanHours,
+      lifespanDays: lifespanDays ?? this.lifespanDays,
       inventory: inventory ?? this.inventory,
       equipped: equipped ?? this.equipped,
     );
