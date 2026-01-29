@@ -5,8 +5,9 @@ import '../../state/game_state.dart';
 import 'sections/cultivate_section.dart';
 import 'sections/inventory_section.dart';
 import 'sections/map_section.dart';
-import 'sections/overview_section.dart';
-import 'widgets/log_panel.dart';
+import 'sections/sect_section.dart';
+import 'sections/stats_section.dart';
+import 'widgets/log_ticker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,10 +25,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final isGameOver = game.isGameOver;
     final tabs = [
-      const OverviewSection(),
+      const SectSection(),
       const CultivateSection(),
-      const MapSection(),
+      const StatsSection(),
       const InventorySection(),
+      const MapSection(),
     ];
 
     return Scaffold(
@@ -80,8 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          const LogPanel(),
+          const SizedBox(height: 1),
+          const LogTicker(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -90,9 +92,9 @@ class _HomeScreenState extends State<HomeScreen> {
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.assessment_outlined),
-            selectedIcon: Icon(Icons.assessment),
-            label: '概览',
+            icon: Icon(Icons.temple_buddhist_outlined),
+            selectedIcon: Icon(Icons.temple_buddhist),
+            label: '宗门',
           ),
           NavigationDestination(
             icon: Icon(Icons.self_improvement_outlined),
@@ -100,14 +102,19 @@ class _HomeScreenState extends State<HomeScreen> {
             label: '修炼',
           ),
           NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map),
-            label: '地图',
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: '属性',
           ),
           NavigationDestination(
             icon: Icon(Icons.backpack_outlined),
             selectedIcon: Icon(Icons.backpack),
             label: '背包',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: '地图',
           ),
         ],
       ),

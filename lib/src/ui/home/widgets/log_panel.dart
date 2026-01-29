@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../../state/game_state.dart';
 
 class LogPanel extends StatelessWidget {
-  const LogPanel({super.key});
+  const LogPanel({super.key, this.onClose});
+
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class LogPanel extends StatelessWidget {
           ),
         ],
       ),
-      height: 200,
+      // Removed fixed height: 200
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -35,13 +37,23 @@ class LogPanel extends StatelessWidget {
               children: [
                 Icon(Icons.history_edu, size: 16, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  '江湖传闻',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: scheme.primary,
+                Expanded(
+                  child: Text(
+                    '江湖传闻',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: scheme.primary,
+                    ),
                   ),
                 ),
+                if (onClose != null)
+                  InkWell(
+                    onTap: onClose,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Icon(Icons.close, size: 20, color: scheme.primary),
+                    ),
+                  ),
               ],
             ),
           ),

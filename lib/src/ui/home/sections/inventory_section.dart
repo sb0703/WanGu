@@ -101,6 +101,9 @@ class InventorySection extends StatelessWidget {
                             case 'equip':
                               context.read<GameState>().equipWeapon(item);
                               break;
+                            case 'equip_armor':
+                              context.read<GameState>().equipArmor(item);
+                              break;
                             case 'discard':
                               context.read<GameState>().discard(item);
                               break;
@@ -116,6 +119,11 @@ class InventorySection extends StatelessWidget {
                             if (item.type == ItemType.weapon)
                               const PopupMenuItem(
                                 value: 'equip',
+                                child: Text('装备'),
+                              ),
+                            if (item.type == ItemType.armor)
+                              const PopupMenuItem(
+                                value: 'equip_armor',
                                 child: Text('装备'),
                               ),
                             const PopupMenuItem(
