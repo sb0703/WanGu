@@ -9,6 +9,7 @@ import 'sections/sect_section.dart';
 import 'sections/stats_section.dart';
 import 'widgets/battle_overlay.dart';
 import 'widgets/log_ticker.dart';
+import 'widgets/npc_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Stack(
               children: [
                 IndexedStack(index: _index, children: tabs),
+                if (game.currentInteractionNpc != null) const NpcOverlay(),
                 if (game.currentBattle != null) const BattleOverlay(),
                 if (isGameOver)
                   Container(

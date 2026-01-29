@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import '../data/enemies_repository.dart';
 import '../data/items_repository.dart';
 import '../data/maps_repository.dart';
+import '../data/npcs_repository.dart';
 import '../models/battle.dart';
 import '../models/enemy.dart';
+import '../models/npc.dart';
 import '../models/item.dart';
 import '../models/log_entry.dart';
 import '../models/map_node.dart';
@@ -64,6 +66,10 @@ class GameState extends ChangeNotifier {
   Battle? _currentBattle;
   Battle? get currentBattle => _currentBattle;
 
+  // NPC Interaction State
+  Npc? _currentInteractionNpc;
+  Npc? get currentInteractionNpc => _currentInteractionNpc;
+
   // Getters for exploration
   Point<int> get playerGridPos => _playerGridPos;
   Set<Point<int>> get visitedTiles => _visitedTiles;
@@ -78,6 +84,13 @@ class GameState extends ChangeNotifier {
   Item? get equippedWeapon => _firstEquipped(ItemType.weapon);
   Item? get equippedArmor => _firstEquipped(ItemType.armor);
   int get bagCapacity => _bagCapacity;
+
+  List<Npc> get currentNpcs {
+    return _currentNode.npcIds
+        .map((id) => NpcsRepository.get(id))
+        .whereType<Npc>()
+        .toList();
+  }
 
   bool get isDead => _player.lifespanDays <= 0 || _player.stats.hp <= 0;
   bool get isGameOver => isDead;
@@ -436,6 +449,43 @@ class GameState extends ChangeNotifier {
 
   void closeBattle() {
     _currentBattle = null;
+    notifyListeners();
+  }
+
+  // NPC Interactions
+  void startNpcInteraction(String npcId) {
+    final npc = NpcsRepository.get(npcId);
+    if (npc != null) {
+      _currentInteractionNpc = npc;
+      notifyListeners();
+    }
+  }
+
+  void endNpcInteraction() {
+    _currentInteractionNpc = null;
+    notifyListeners();
+  }
+
+  void attackNpc(Npc npc) {
+    _currentInteractionNpc = null; // Close dialog
+
+    // Convert NPC to Enemy for battle
+    final enemy = Enemy(
+      name: npc.name,
+      stats: npc.stats,
+      loot: [], // Or specific loot
+      xpReward: npc.stats.attack * 2, // Simple logic
+    );
+
+    _log('你突然对 ${npc.name} 发起了攻击！');
+
+    _currentBattle = Battle(
+      enemy: enemy,
+      playerHp: _player.stats.hp,
+      playerMaxHp: _player.stats.maxHp,
+      playerSpirit: _player.stats.spirit,
+      playerMaxSpirit: _player.stats.maxSpirit,
+    );
     notifyListeners();
   }
 

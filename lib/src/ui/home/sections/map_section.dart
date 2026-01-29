@@ -89,44 +89,150 @@ class _MapSectionState extends State<MapSection> {
           ),
         ),
 
+        // NPC Bar (Top of Map)
+        const _NpcBar(),
+
         // Grid Map
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              return Center(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _ExplorationGrid(
-                      game: game,
-                      maxWidth: constraints.maxWidth,
-                    ),
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _ExplorationGrid(
+                    game: game,
+                    maxWidth: constraints.maxWidth,
                   ),
                 ),
               );
             },
           ),
         ),
-
-        // Legend / Info
-        Container(
-          padding: const EdgeInsets.all(12),
-          color: theme.colorScheme.surfaceContainerLow,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _LegendItem(color: theme.colorScheme.primary, label: '修士'),
-              const SizedBox(width: 16),
-              _LegendItem(color: Colors.grey.shade300, label: '未知'),
-              const SizedBox(width: 16),
-              _LegendItem(
-                color: theme.colorScheme.surfaceContainerHighest,
-                label: '已探索',
-              ),
-            ],
-          ),
-        ),
+        const _Legend(),
       ],
+    );
+  }
+}
+
+class _NpcBar extends StatelessWidget {
+  const _NpcBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final game = context.watch<GameState>();
+    final npcs = game.currentNpcs;
+    final theme = Theme.of(context);
+
+    if (npcs.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsetsGeometry.symmetric(vertical: 5),
+      child: Container(
+        height: 95,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLow,
+          border: Border(bottom: BorderSide(color: theme.dividerColor)),
+        ),
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          scrollDirection: Axis.horizontal,
+          itemCount: npcs.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 16),
+          itemBuilder: (context, index) {
+            final npc = npcs[index];
+            return GestureDetector(
+              onTap: () => game.startNpcInteraction(npc.id),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.5,
+                            ),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          child: Text(
+                            npc.name[0],
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.tertiary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surface,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.chat_bubble,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    npc.name,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: (index * 100).ms).slideX(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      color: theme.colorScheme.surfaceContainerLow,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _LegendItem(color: theme.colorScheme.primary, label: '修士'),
+          const SizedBox(width: 16),
+          _LegendItem(color: Colors.grey.shade300, label: '未知'),
+          const SizedBox(width: 16),
+          _LegendItem(
+            color: theme.colorScheme.surfaceContainerHighest,
+            label: '已探索',
+          ),
+        ],
+      ),
     );
   }
 }
