@@ -153,6 +153,8 @@ class InventorySection extends StatelessWidget {
         return Icons.shield;
       case ItemType.consumable:
         return Icons.local_pharmacy; // Better pill/medicine icon
+      case ItemType.other:
+        return Icons.help_outline;
     }
   }
 }

@@ -195,6 +195,16 @@ class _CharacterStatusCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           _PurityBar(purity: player.stats.purity, theme: theme),
+                          if (player.afflictions.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: player.afflictions.map((a) {
+                                return _AfflictionChip(affliction: a);
+                              }).toList(),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -365,4 +375,113 @@ class _Avatar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AfflictionChip extends StatelessWidget {
+  const _AfflictionChip({required this.affliction});
+
+  final String affliction;
+
+  @override
+  Widget build(BuildContext context) {
+    final info = _getAfflictionInfo(affliction);
+    final color = info.color;
+
+    return InkWell(
+      onTap: () => _showAfflictionDetails(context, info),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(info.icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              info.label,
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAfflictionDetails(BuildContext context, _AfflictionInfo info) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(info.icon, color: info.color),
+            const SizedBox(width: 8),
+            Text(info.label, style: TextStyle(color: info.color)),
+          ],
+        ),
+        content: Text(info.description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _AfflictionInfo _getAfflictionInfo(String id) {
+    switch (id) {
+      case 'one_arm':
+        return _AfflictionInfo(
+          label: '肉身残缺',
+          description: '失去一臂，身体不再完整。\n效果：攻击力永久降低 30%。\n来源：突破失败遭受雷劫轰击。',
+          color: Colors.red[800]!,
+          icon: Icons.accessibility_new,
+        );
+      case 'blind':
+        return _AfflictionInfo(
+          label: '五感尽失',
+          description: '双目失明，世界归于黑暗。\n效果：悟性永久降低 50%。\n来源：突破失败遭受反噬。',
+          color: Colors.grey[800]!,
+          icon: Icons.visibility_off,
+        );
+      case 'broken_heart':
+        return _AfflictionInfo(
+          label: '道心破碎',
+          description: '心魔入侵，道心不再稳固。\n效果：悟性永久降低 5 点。\n来源：突破失败被心魔所趁。',
+          color: Colors.purple[800]!,
+          icon: Icons.broken_image,
+        );
+      default:
+        return _AfflictionInfo(
+          label: '未知诅咒',
+          description: '来源不明的神秘诅咒。',
+          color: Colors.black,
+          icon: Icons.error,
+        );
+    }
+  }
+}
+
+class _AfflictionInfo {
+  final String label;
+  final String description;
+  final Color color;
+  final IconData icon;
+
+  _AfflictionInfo({
+    required this.label,
+    required this.description,
+    required this.color,
+    required this.icon,
+  });
 }

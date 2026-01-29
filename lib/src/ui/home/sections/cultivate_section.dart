@@ -64,23 +64,55 @@ class CultivateSection extends StatelessWidget {
           const SizedBox(height: 12),
 
           if (progress >= 1.0)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: game.isDead
-                    ? null
-                    : () => context.read<GameState>().attemptBreakthrough(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.amber[700],
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 24),
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.amber.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.analytics, size: 16, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      Text(
+                        '当前突破成功率: ${(game.estimatedBreakthroughChance * 100).toStringAsFixed(1)}%',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.amber[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                icon: const Icon(Icons.bolt, size: 28),
-                label: const Text(
-                  '尝试突破',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: game.isDead
+                        ? null
+                        : () => context.read<GameState>().attemptBreakthrough(),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.amber[700],
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                    ),
+                    icon: const Icon(Icons.bolt, size: 28),
+                    label: const Text(
+                      '尝试突破',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             )
           else
             Column(

@@ -1,4 +1,4 @@
-enum ItemType { weapon, armor, consumable }
+enum ItemType { weapon, armor, consumable, other }
 
 class Item {
   const Item({

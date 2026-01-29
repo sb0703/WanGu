@@ -6,6 +6,7 @@ import '../data/enemies_repository.dart';
 import '../data/items_repository.dart';
 import '../data/maps_repository.dart';
 import '../data/npcs_repository.dart';
+import '../data/punishments_repository.dart';
 import '../models/battle.dart';
 import '../models/enemy.dart';
 import '../models/npc.dart';
@@ -83,6 +84,35 @@ class GameState extends ChangeNotifier {
   // Getters for exploration
   Point<int> get playerGridPos => _playerGridPos;
   Set<Point<int>> get visitedTiles => _visitedTiles;
+
+  double get estimatedBreakthroughChance {
+    final isMajorBreakthrough = _player.level >= 10;
+    double rate;
+
+    if (isMajorBreakthrough) {
+      // Major Breakthrough Base
+      rate = 0.6 * (0.72 + _player.stats.insight * 0.02);
+
+      // Check pills (Logic duplicated for display, ideally refactor to helper)
+      final hasPill =
+          _player.inventory.any(
+            (i) => i.id == 'foundation_pill' && _player.stageIndex == 0,
+          ) ||
+          _player.inventory.any(
+            (i) => i.id == 'qi_pill' && _player.stageIndex == -1,
+          );
+      if (hasPill) rate += 0.3;
+    } else {
+      // Minor Breakthrough Base
+      rate = 0.9 + _player.stats.insight * 0.01;
+    }
+
+    // Apply Purity Factor to EVERYTHING
+    final purityFactor = _player.stats.purity / 100.0;
+    rate *= purityFactor;
+
+    return rate.clamp(0.01, 0.95);
+  }
 
   // Public getters
   int get tick => _tick;
@@ -347,52 +377,14 @@ class GameState extends ChangeNotifier {
     final maxXp = _player.currentMaxXp;
     if (_player.xp < maxXp) return;
 
-    final isMajorBreakthrough = _player.level >= 10;
-
-    // Check for consumables that help breakthrough (simple check for now)
-    // In future, we can prompt user to use items.
-
-    // Base success rate
-    double successRate = 0.72 + _player.stats.insight * 0.02;
-
-    // PURITY MODIFIER: The core of the new mechanic
-    // Success Rate *= (Purity / 100)
-    // Example: 100 purity -> 100% of base rate
-    //          50 purity -> 50% of base rate (Huge penalty)
-    final purityFactor = _player.stats.purity / 100.0;
-    successRate *= purityFactor;
-
-    if (isMajorBreakthrough) {
-      // Major Breakthrough (Stage Change) is harder
-      successRate *= 0.6;
-
-      // REQUIREMENT: Must have a "Breahthrough Item" for major realms?
-      // For now, let's just make it hard.
-      // Or check for "Foundation Pill" if going to Foundation.
-      // Simple implementation: If no pill, very low chance.
-
-      // Let's assume player uses best pill automatically for now (to be improved in UI)
-      final hasPill =
-          _player.inventory.any(
-            (i) => i.id == 'foundation_pill' && _player.stageIndex == 0,
-          ) ||
-          _player.inventory.any(
-            (i) => i.id == 'qi_pill' && _player.stageIndex == -1,
-          ); // Just example
-
-      if (hasPill) successRate += 0.3;
-    } else {
-      // Minor Breakthrough (Level Up) is easier
-      successRate = 0.9 + _player.stats.insight * 0.01;
-    }
-
-    // Cap rate
-    successRate = successRate.clamp(0.1, 0.95);
-
+    // Use the unified calculation logic
+    final successRate = estimatedBreakthroughChance;
     final success = _rng.nextDouble() < successRate;
 
     _showingBreakthrough = true;
     _breakthroughSuccess = success;
+
+    final isMajorBreakthrough = _player.level >= 10;
 
     if (success) {
       if (isMajorBreakthrough) {
@@ -442,15 +434,52 @@ class GameState extends ChangeNotifier {
         _log('小境界突破成功，达到 ${_player.realmLabel}！');
       }
     } else {
-      // Penalty: Lose XP
-      final penaltyXp = (maxXp * 0.3).toInt();
-      _player = _player.copyWith(xp: _player.xp - penaltyXp);
-      _breakthroughMessage = isMajorBreakthrough
-          ? '破境失败，心魔反噬！\n修为损失 $penaltyXp'
-          : '突破失败，气息紊乱。\n修为损失 $penaltyXp';
-      _log('突破失败，元气受损，修为倒退。');
+      _handleBreakthroughFailure(maxXp, isMajorBreakthrough);
     }
     notifyListeners();
+  }
+
+  void _handleBreakthroughFailure(int maxXp, bool isMajor) {
+    final result = PunishmentsRepository.applyPunishment(
+      player: _player,
+      maxXp: maxXp,
+      isMajorBreakthrough: isMajor,
+      rng: _rng,
+    );
+
+    _player = result.player;
+    _breakthroughMessage = result.message;
+
+    if (result.logMessage.isNotEmpty) {
+      _log(result.logMessage);
+    }
+
+    // Handle Teleportation
+    if (result.teleportToDanger) {
+      // Find most dangerous node
+      if (_mapNodes.isNotEmpty) {
+        final dangerousNode = _mapNodes.reduce(
+          (curr, next) => curr.danger > next.danger ? curr : next,
+        );
+        if (dangerousNode != _currentNode) {
+          // We use enterRegion but suppress log or add specific log
+          _currentNode = dangerousNode; // Teleport directly
+          _playerGridPos = const Point(0, 0);
+          _visitedTiles = {_playerGridPos};
+          _log('空间裂缝撕裂，你被强制传送到了 ${dangerousNode.name}！');
+        }
+      }
+    }
+
+    // Handle Nemesis Spawn
+    if (result.spawnNemesis) {
+      // Trigger enemy encounter immediately
+      _encounterEnemy(_currentNode);
+    }
+
+    if (result.daysPassed > 0) {
+      _advanceTime(result.daysPassed);
+    }
   }
 
   void closeBreakthrough() {
