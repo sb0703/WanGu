@@ -1,5 +1,6 @@
 import 'stats.dart';
 
+/// 敌人模型
 class Enemy {
   const Enemy({
     required this.id,
@@ -11,11 +12,11 @@ class Enemy {
     this.xpReward = 12,
   });
 
-  final String id;
-  final String name;
-  final String description; // Contains habitat and traits
-  final int dangerLevel; // 1-10 scale
-  final Stats stats;
-  final List<String> loot; // item ids
-  final int xpReward;
+  final String id; // ID
+  final String name; // 名称
+  final String description; // 描述 (包含栖息地和特征)
+  final int dangerLevel; // 危险等级 (1-10)
+  final Stats stats; // 属性
+  final List<String> loot; // 掉落物品ID列表
+  final int xpReward; // 击败获得的修为奖励
 }

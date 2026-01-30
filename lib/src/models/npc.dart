@@ -1,15 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'stats.dart';
 
+/// NPC 模型
 @immutable
 class Npc {
-  final String id;
-  final String name;
-  final String title;
-  final String description;
-  final Stats stats;
-  final List<String> dialogues;
-  final int friendship; // 0-100, 50 neutral
+  final String id; // ID
+  final String name; // 姓名
+  final String title; // 称号
+  final String description; // 描述
+  final Stats stats; // 属性
+  final List<String> dialogues; // 对话列表
+  final int friendship; // 好感度 (0-100, 50 为中立)
 
   const Npc({
     required this.id,
@@ -21,6 +22,7 @@ class Npc {
     this.friendship = 50,
   });
 
+  /// 复制并修改
   Npc copyWith({
     String? name,
     String? title,

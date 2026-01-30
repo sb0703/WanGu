@@ -1,3 +1,4 @@
+/// 修仙境界阶段模型
 class RealmStage {
   const RealmStage({
     required this.name,
@@ -7,12 +8,13 @@ class RealmStage {
     required this.spiritBonus,
   });
 
-  final String name;
-  final int maxXp;
-  final int hpBonus;
-  final int attackBonus;
-  final int spiritBonus;
+  final String name; // 境界名称 (如: 练气)
+  final int maxXp; // 该境界基础修为上限
+  final int hpBonus; // 突破增加气血
+  final int attackBonus; // 突破增加攻击
+  final int spiritBonus; // 突破增加灵力
 
+  /// 境界定义列表
   static const stages = <RealmStage>[
     RealmStage(
       name: '练气',

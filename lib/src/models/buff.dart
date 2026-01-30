@@ -1,16 +1,18 @@
 import 'stats.dart';
 
+/// 状态效果类型
 enum BuffType {
   positive, // 增益
   negative, // 减益 (Debuff)
   mixed, // 混合 (如: 虎臂)
 }
 
+/// 状态效果 (Buff/Debuff)
 class Buff {
-  final String id;
-  final String name;
-  final String description;
-  final BuffType type;
+  final String id; // ID
+  final String name; // 名称
+  final String description; // 描述
+  final BuffType type; // 类型
   final Stats statModifiers; // 属性修正 (可以是负数)
 
   const Buff({
@@ -31,5 +33,6 @@ class Buff {
     ),
   });
 
+  /// 是否为减益效果
   bool get isDebuff => type == BuffType.negative;
 }

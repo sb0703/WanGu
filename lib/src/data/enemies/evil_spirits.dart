@@ -1,3 +1,4 @@
+import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
 
@@ -8,7 +9,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于荒坟。附体夺念，畏镇邪符。',
     dangerLevel: 4,
     stats: Stats(maxHp: 80, hp: 80, attack: 25, defense: 0, speed: 15, insight: 1, purity: -10),
-    loot: ['soul_dust', 'talisman_paper_roll'],
+    loot: ['soul_dust', 'talisman_paper_roll', ...DropTables.lowLevelConsumables],
     xpReward: 30,
   ),
   Enemy(
@@ -17,7 +18,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于古槐。绳影缠颈，恐惧扩散。',
     dangerLevel: 5,
     stats: Stats(maxHp: 120, hp: 120, attack: 35, defense: 5, speed: 12, insight: 2, purity: -20),
-    loot: ['rope', 'withered_heart_wood'],
+    loot: ['rope', 'withered_heart_wood', ...DropTables.lowLevelConsumables],
     xpReward: 40,
   ),
   Enemy(
@@ -26,7 +27,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于河口。拖入水底，幻听诱人。',
     dangerLevel: 5,
     stats: Stats(maxHp: 150, hp: 150, attack: 30, defense: 10, speed: 8, insight: 3, purity: -15),
-    loot: ['water_pearl', 'spirit_stone_low'],
+    loot: ['water_pearl', 'spirit_stone_low', ...DropTables.lowLevelConsumables],
     xpReward: 45,
   ),
   Enemy(
@@ -35,7 +36,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于村落。夜半巡走，替身迷惑。',
     dangerLevel: 4,
     stats: Stats(maxHp: 60, hp: 60, attack: 20, defense: 2, speed: 18, insight: 5, purity: -5),
-    loot: ['talisman_paper_roll', 'paper_charm'],
+    loot: ['talisman_paper_roll', 'paper_charm', ...DropTables.lowLevelConsumables],
     xpReward: 35,
   ),
   Enemy(
@@ -44,7 +45,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于乱葬。力大无脑，畏火畏盐。',
     dangerLevel: 5,
     stats: Stats(maxHp: 200, hp: 200, attack: 40, defense: 20, speed: 5, insight: 0, purity: -30),
-    loot: ['corpse_nail', 'cloth_robe'],
+    loot: ['corpse_nail', 'cloth_robe', ...DropTables.lowLevelConsumables],
     xpReward: 50,
   ),
   Enemy(
@@ -53,7 +54,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于疫村。散播疫气，群体恐慌。',
     dangerLevel: 6,
     stats: Stats(maxHp: 180, hp: 180, attack: 25, defense: 10, speed: 10, insight: 4, purity: -50),
-    loot: ['plague_sac', 'white_dew_fern'],
+    loot: ['plague_sac', 'white_dew_fern', ...DropTables.lowLevelConsumables],
     xpReward: 55,
   ),
   Enemy(
@@ -62,7 +63,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于客栈。靠近灯火更强，吸食睡意。',
     dangerLevel: 5,
     stats: Stats(maxHp: 100, hp: 100, attack: 30, defense: 50, speed: 20, insight: 6, purity: -10),
-    loot: ['shadow_dust', 'oil'],
+    loot: ['shadow_dust', 'oil', ...DropTables.lowLevelConsumables],
     xpReward: 42,
   ),
   Enemy(
@@ -71,7 +72,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于古宅。从镜中换位，夺脸。',
     dangerLevel: 6,
     stats: Stats(maxHp: 140, hp: 140, attack: 35, defense: 15, speed: 25, insight: 8, purity: -20),
-    loot: ['mirror_shard', 'mask_fragment'],
+    loot: ['mirror_shard', 'mask_fragment', ...DropTables.midLevelConsumables],
     xpReward: 58,
   ),
   Enemy(
@@ -80,7 +81,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于废城。回声迷魂，墙体出手。',
     dangerLevel: 6,
     stats: Stats(maxHp: 300, hp: 300, attack: 20, defense: 40, speed: 0, insight: 5, purity: -25),
-    loot: ['stone_heart_flower', 'crying_ash'],
+    loot: ['stone_heart_flower', 'crying_ash', ...DropTables.midLevelConsumables],
     xpReward: 60,
   ),
   Enemy(
@@ -89,7 +90,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于祠堂。举灯照魂，照到即弱。',
     dangerLevel: 5,
     stats: Stats(maxHp: 90, hp: 90, attack: 40, defense: 5, speed: 15, insight: 10, purity: -15),
-    loot: ['bone_lamp_wick', 'spirit_fire_lamp'],
+    loot: ['bone_lamp_wick', 'spirit_fire_lamp', ...DropTables.lowLevelConsumables],
     xpReward: 48,
   ),
   Enemy(
@@ -98,7 +99,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于荒井。尖啸破神，畏铃声。',
     dangerLevel: 6,
     stats: Stats(maxHp: 110, hp: 110, attack: 45, defense: 8, speed: 18, insight: 2, purity: -40),
-    loot: ['cloth_robe', 'soul_dust'],
+    loot: ['cloth_robe', 'soul_dust', ...DropTables.lowLevelConsumables],
     xpReward: 52,
   ),
   Enemy(
@@ -107,7 +108,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于城门。巡夜索命，畏官印。',
     dangerLevel: 7,
     stats: Stats(maxHp: 350, hp: 350, attack: 50, defense: 25, speed: 20, insight: 12, purity: -10),
-    loot: ['token_fragment', 'broken_silver'],
+    loot: ['token_fragment', 'broken_silver', ...DropTables.midLevelConsumables],
     xpReward: 80,
   ),
   Enemy(
@@ -116,7 +117,7 @@ const List<Enemy> evilSpirits = [
     description: '出没于路口。拘魂问罪，惧功德火。',
     dangerLevel: 7,
     stats: Stats(maxHp: 400, hp: 400, attack: 55, defense: 30, speed: 15, insight: 15, purity: 0),
-    loot: ['chain', 'spirit_locking_chain'],
+    loot: ['chain', 'spirit_locking_chain', ...DropTables.midLevelConsumables],
     xpReward: 90,
   ),
 ];

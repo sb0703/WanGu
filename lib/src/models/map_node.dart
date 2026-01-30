@@ -1,3 +1,4 @@
+/// 地图节点模型
 class MapNode {
   const MapNode({
     required this.id,
@@ -10,16 +11,16 @@ class MapNode {
     this.resourceIds = const ['herb'],
   });
 
-  final String id;
-  final String name;
-  final String description;
-  final int danger; // 0-10, higher means harder encounters
-  final List<String> npcIds;
+  final String id; // ID
+  final String name; // 名称
+  final String description; // 描述
+  final int danger; // 危险等级 (0-10, 越高越危险)
+  final List<String> npcIds; // NPC ID列表
 
-  // Event probabilities (should sum to <= 1.0 ideally, or be handled sequentially)
-  final double enemyChance;
-  final double herbChance;
+  // 事件概率 (理想情况下总和 <= 1.0，或者按顺序处理)
+  final double enemyChance; // 遇敌概率
+  final double herbChance; // 采药概率
 
-  // Resources found in this map
-  final List<String> resourceIds;
+  // 该地图包含的资源
+  final List<String> resourceIds; // 资源ID列表
 }

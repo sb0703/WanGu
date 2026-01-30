@@ -53,6 +53,48 @@ extension BattleLogic on GameState {
     }
 
     // Enemy Turn
+    _resolveEnemyTurn(battle);
+
+    notify();
+  }
+
+  void attemptFlee() {
+    if (_currentBattle == null || _currentBattle!.isOver) return;
+
+    final battle = _currentBattle!;
+    final enemy = battle.enemy;
+
+    final playerSpeed = _player.effectiveStats.speed + _itemSpeedBonus();
+    final enemySpeed = enemy.stats.speed;
+
+    // Chance: 50% base + 2% per speed diff
+    double chance = 0.5 + (playerSpeed - enemySpeed) * 0.02;
+    chance = chance.clamp(0.1, 0.9); // Always some chance to fail or succeed
+
+    if (_rng.nextDouble() < chance) {
+      // Success
+      battle.state = BattleState.fled;
+      _log('你成功逃离了战斗！');
+      // Update player state to reflect current battle status (e.g. lost HP/Spirit)
+      _player = _player.copyWith(
+        stats: _player.stats.copyWith(
+          hp: battle.playerHp,
+          spirit: battle.playerSpirit,
+        ),
+      );
+      notify();
+    } else {
+      // Fail
+      _log('逃跑失败！被 ${enemy.name} 追上了！');
+      _resolveEnemyTurn(battle);
+      notify();
+    }
+  }
+
+  void _resolveEnemyTurn(Battle battle) {
+    if (battle.isOver) return;
+
+    final enemy = battle.enemy;
     final enemyAtk = enemy.stats.attack.toDouble();
     // Use effective defense
     final playerDef = (_player.effectiveStats.defense + _itemDefenseBonus())
@@ -79,8 +121,7 @@ extension BattleLogic on GameState {
       battle.playerHp = 0;
       battle.state = BattleState.defeat;
       _resolveBattleDefeat(battle);
-      notify();
-      return;
+      return; // Battle ended
     }
 
     battle.turn++;
@@ -96,8 +137,6 @@ extension BattleLogic on GameState {
         ),
       );
     }
-
-    notify();
   }
 
   void _resolveBattleVictory(Battle battle) {
@@ -113,11 +152,61 @@ extension BattleLogic on GameState {
 
     // Loot
     if (enemy.loot.isNotEmpty && _rng.nextDouble() < 0.3) {
-      final lootId = enemy.loot[_rng.nextInt(enemy.loot.length)];
-      final added = _addItemById(lootId);
-      final item = ItemsRepository.get(lootId);
-      if (added && item != null) {
-        _log('拾取战利品：${item.name}');
+      // Create weighted candidates list
+      final candidates = <MapEntry<String, int>>[];
+
+      for (final lootId in enemy.loot) {
+        final item = ItemsRepository.get(lootId);
+        if (item == null) continue;
+
+        int weight;
+        switch (item.rarity) {
+          case ItemRarity.common:
+            weight = 1000;
+            break;
+          case ItemRarity.uncommon:
+            weight = 400;
+            break;
+          case ItemRarity.rare:
+            weight = 150;
+            break;
+          case ItemRarity.epic:
+            weight = 50;
+            break;
+          case ItemRarity.legendary:
+            weight = 10;
+            break;
+          case ItemRarity.mythic:
+            weight = 1;
+            break;
+        }
+        candidates.add(MapEntry(lootId, weight));
+      }
+
+      if (candidates.isNotEmpty) {
+        final totalWeight = candidates.fold(
+          0,
+          (sum, entry) => sum + entry.value,
+        );
+        final roll = _rng.nextInt(totalWeight);
+
+        String? selectedLootId;
+        int currentSum = 0;
+        for (final entry in candidates) {
+          currentSum += entry.value;
+          if (roll < currentSum) {
+            selectedLootId = entry.key;
+            break;
+          }
+        }
+
+        if (selectedLootId != null) {
+          final added = _addItemById(selectedLootId);
+          final item = ItemsRepository.get(selectedLootId);
+          if (added && item != null) {
+            _log('拾取战利品：${item.name}');
+          }
+        }
       }
     }
     _checkBreakthrough();

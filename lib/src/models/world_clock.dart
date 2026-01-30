@@ -1,3 +1,4 @@
+/// 世界时钟模型
 class WorldClock {
   const WorldClock({
     required this.year,
@@ -6,18 +7,19 @@ class WorldClock {
     this.hour = 0,
   });
 
-  final int year;
-  final int month;
-  final int day;
-  final int hour;
+  final int year; // 年
+  final int month; // 月 (1-12)
+  final int day; // 日 (1-30)
+  final int hour; // 时 (0-23)
 
+  /// 时间流逝 (按天)
   WorldClock tickDays(num days) {
-    // If days is integer, use simple logic, but now we support double
-    // Convert days to hours for precision
+    // 如果是小数，转换为小时计算以保证精度
     int hoursToAdd = (days * 24).round();
     return tickHours(hoursToAdd);
   }
-  
+
+  /// 时间流逝 (按小时)
   WorldClock tickHours(int hours) {
     int newHour = hour + hours;
     int daysToAdd = 0;
@@ -25,7 +27,7 @@ class WorldClock {
       newHour -= 24;
       daysToAdd++;
     }
-    
+
     int newDay = day + daysToAdd;
     int newMonth = month;
     int newYear = year;
@@ -38,9 +40,14 @@ class WorldClock {
       }
     }
 
-    return WorldClock(year: newYear, month: newMonth, day: newDay, hour: newHour);
+    return WorldClock(
+      year: newYear,
+      month: newMonth,
+      day: newDay,
+      hour: newHour,
+    );
   }
-  
+
   WorldClock copyWith({int? year, int? month, int? day, int? hour}) {
     return WorldClock(
       year: year ?? this.year,
@@ -50,5 +57,6 @@ class WorldClock {
     );
   }
 
+  /// 简短格式化文本
   String shortLabel() => '$year/$month/$day';
 }

@@ -442,11 +442,7 @@ class _BattleControls extends StatelessWidget {
                     label: '逃跑',
                     icon: Icons.directions_run,
                     color: Colors.grey,
-                    onTap: () {
-                      // Escape logic not implemented yet in this turn,
-                      // but user can just leave if we add logic later.
-                      // For now just skip turn or do nothing.
-                    },
+                    onTap: () => game.attemptFlee(),
                     isOutlined: true,
                   ),
                 ),

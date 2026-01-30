@@ -1,3 +1,4 @@
+/// 战斗结算结果
 class BattleResult {
   const BattleResult({
     required this.victory,
@@ -8,10 +9,10 @@ class BattleResult {
     this.lootedItemId,
   });
 
-  final bool victory;
-  final int playerHp;
-  final int enemyHp;
-  final int xpGained;
-  final int playerSpirit;
-  final String? lootedItemId;
+  final bool victory; // 是否胜利
+  final int playerHp; // 剩余气血
+  final int enemyHp; // 敌人剩余气血
+  final int xpGained; // 获得修为
+  final int playerSpirit; // 剩余灵力
+  final String? lootedItemId; // 掉落物品ID
 }

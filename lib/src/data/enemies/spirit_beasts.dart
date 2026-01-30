@@ -1,3 +1,4 @@
+import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
 
@@ -8,7 +9,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于高空。御风俯冲，撕裂罡气。',
     dangerLevel: 4,
     stats: Stats(maxHp: 120, hp: 120, attack: 30, defense: 10, speed: 25, insight: 5, purity: 10),
-    loot: ['vulture_wing', 'wind_core'],
+    loot: ['vulture_wing', 'wind_core', ...DropTables.rareMonsterParts, ...DropTables.midLevelConsumables],
     xpReward: 40,
   ),
   Enemy(
@@ -17,7 +18,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于雷原。引雷自护，角电反击。',
     dangerLevel: 5,
     stats: Stats(maxHp: 150, hp: 150, attack: 35, defense: 15, speed: 20, insight: 4, purity: 20),
-    loot: ['goat_horn', 'thunder_sand'],
+    loot: ['goat_horn', 'thunder_sand', ...DropTables.rareMonsterParts],
     xpReward: 50,
   ),
   Enemy(
@@ -26,7 +27,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于灵泽。缠杀吞灵，蜕皮复生。',
     dangerLevel: 6,
     stats: Stats(maxHp: 250, hp: 250, attack: 40, defense: 20, speed: 10, insight: 6, purity: 15),
-    loot: ['python_skin', 'snake_gall'],
+    loot: ['python_skin', 'snake_gall', ...DropTables.rareMonsterParts, ...DropTables.rareHerbs],
     xpReward: 70,
   ),
   Enemy(
@@ -35,7 +36,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于火穴。火息灼魂，尾鞭碎石。',
     dangerLevel: 6,
     stats: Stats(maxHp: 300, hp: 300, attack: 45, defense: 25, speed: 12, insight: 5, purity: 25),
-    loot: ['lizard_core', 'fire_crystal'],
+    loot: ['lizard_core', 'fire_crystal', ...DropTables.epicMonsterParts],
     xpReward: 80,
   ),
   Enemy(
@@ -44,7 +45,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于海湾。幻雾成城，吞舟吐影。',
     dangerLevel: 5,
     stats: Stats(maxHp: 200, hp: 200, attack: 25, defense: 40, speed: 5, insight: 10, purity: 30),
-    loot: ['clam_pearl', 'illusion_sand'],
+    loot: ['clam_pearl', 'illusion_sand', ...DropTables.rareMonsterParts],
     xpReward: 60,
   ),
   Enemy(
@@ -53,7 +54,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于灵林。剑气爪风，王者威压。',
     dangerLevel: 7,
     stats: Stats(maxHp: 400, hp: 400, attack: 60, defense: 30, speed: 22, insight: 8, purity: 40),
-    loot: ['tiger_bone', 'sword_fragment'],
+    loot: ['tiger_bone', 'sword_fragment', ...DropTables.epicMonsterParts, ...DropTables.basicEquipment],
     xpReward: 100,
   ),
   Enemy(
@@ -62,7 +63,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于灵田。噬金甲硬，群潮压境。',
     dangerLevel: 4,
     stats: Stats(maxHp: 180, hp: 180, attack: 28, defense: 50, speed: 8, insight: 2, purity: 10),
-    loot: ['beetle_shell', 'gold_powder'],
+    loot: ['beetle_shell', 'gold_powder', ...DropTables.commonMonsterParts],
     xpReward: 45,
   ),
   Enemy(
@@ -71,7 +72,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于幽谷。灵丝困阵，毒雾封喉。',
     dangerLevel: 5,
     stats: Stats(maxHp: 220, hp: 220, attack: 35, defense: 15, speed: 18, insight: 7, purity: 20),
-    loot: ['spider_sac', 'poison_crystal'],
+    loot: ['spider_sac', 'poison_crystal', ...DropTables.rareMonsterParts],
     xpReward: 55,
   ),
   Enemy(
@@ -80,7 +81,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于雪原。冰雾遮目，角光净煞。',
     dangerLevel: 4,
     stats: Stats(maxHp: 160, hp: 160, attack: 25, defense: 12, speed: 20, insight: 12, purity: 50),
-    loot: ['deer_antler', 'frost_scale'],
+    loot: ['deer_antler', 'frost_scale', ...DropTables.rareHerbs],
     xpReward: 48,
   ),
   Enemy(
@@ -89,7 +90,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于江河。翻江浪涌，鳞甲反震。',
     dangerLevel: 7,
     stats: Stats(maxHp: 500, hp: 500, attack: 55, defense: 35, speed: 15, insight: 10, purity: 60),
-    loot: ['fish_scale', 'dragon_blood'], // Generic scale for now
+    loot: ['fish_scale', 'dragon_blood', ...DropTables.epicMonsterParts, ...DropTables.midLevelConsumables],
     xpReward: 120,
   ),
   Enemy(
@@ -98,7 +99,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于暗林。吞影隐身，反咬心神。',
     dangerLevel: 4,
     stats: Stats(maxHp: 100, hp: 100, attack: 32, defense: 8, speed: 30, insight: 8, purity: 15),
-    loot: ['fur', 'shadow_skin'],
+    loot: ['fur', 'shadow_skin', ...DropTables.rareMonsterParts],
     xpReward: 42,
   ),
   Enemy(
@@ -107,7 +108,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于灵山。指挥群猿，投石如雨。',
     dangerLevel: 5,
     stats: Stats(maxHp: 280, hp: 280, attack: 40, defense: 20, speed: 15, insight: 15, purity: 20),
-    loot: ['ape_tendon', 'spirit_fruit'],
+    loot: ['ape_tendon', 'spirit_fruit', ...DropTables.rareHerbs, ...DropTables.midLevelConsumables],
     xpReward: 65,
   ),
   Enemy(
@@ -116,7 +117,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于城外。魅惑心神，换面迷踪。',
     dangerLevel: 5,
     stats: Stats(maxHp: 150, hp: 150, attack: 20, defense: 10, speed: 25, insight: 20, purity: 30),
-    loot: ['fox_blood', 'mask_fragment'],
+    loot: ['fox_blood', 'mask_fragment', ...DropTables.rareMonsterParts],
     xpReward: 60,
   ),
   Enemy(
@@ -125,7 +126,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于古潭。龟息沉眠，醒则地裂。',
     dangerLevel: 6,
     stats: Stats(maxHp: 600, hp: 600, attack: 30, defense: 80, speed: 2, insight: 5, purity: 40),
-    loot: ['turtle_shell', 'earth_vein_stone'],
+    loot: ['turtle_shell', 'earth_vein_stone', ...DropTables.rareMonsterParts],
     xpReward: 90,
   ),
   Enemy(
@@ -134,7 +135,7 @@ const List<Enemy> spiritBeasts = [
     description: '出没于火花谷。蜂群火针，烧林封路。',
     dangerLevel: 5,
     stats: Stats(maxHp: 200, hp: 200, attack: 35, defense: 10, speed: 22, insight: 8, purity: 25),
-    loot: ['royal_jelly', 'fire_honey'],
+    loot: ['royal_jelly', 'fire_honey', ...DropTables.rareHerbs],
     xpReward: 55,
   ),
 ];
