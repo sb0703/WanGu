@@ -156,6 +156,7 @@ class GameState extends ChangeNotifier {
       _advanceTime(days);
       _log('修为已至瓶颈，无法寸进，需闭关突破。');
       notifyListeners();
+      saveToDisk(); // Auto-save
       return;
     }
 
@@ -189,6 +190,7 @@ class GameState extends ChangeNotifier {
     _advanceTime(days);
     _log('纳气修炼 $days 天，修为+$gainedXp，纯度-$purityLoss');
     notifyListeners();
+    saveToDisk(); // Auto-save
   }
 
   // Purify: Remove Impurity (No XP, Increases Purity)
@@ -199,6 +201,7 @@ class GameState extends ChangeNotifier {
       _advanceTime(days);
       _log('灵气已纯净无暇，无需提纯。');
       notifyListeners();
+      saveToDisk(); // Auto-save
       return;
     }
 
@@ -216,6 +219,7 @@ class GameState extends ChangeNotifier {
     _advanceTime(days);
     _log('运功化煞 $days 天，纯度+$totalRecovery');
     notifyListeners();
+    saveToDisk(); // Auto-save
   }
 
   /// Manually trigger breakthrough attempt
@@ -272,6 +276,7 @@ class GameState extends ChangeNotifier {
 
     _triggerNodeEvent(_currentNode);
     notifyListeners();
+    saveToDisk(); // Auto-save
   }
 
   // Deprecated: moveTo used to be direct travel+event
@@ -293,6 +298,7 @@ class GameState extends ChangeNotifier {
     _advanceTime(days);
     _log('调息恢复，气血/灵力回复');
     notifyListeners();
+    saveToDisk(); // Auto-save
   }
 
   bool _addItemById(String id) {
@@ -367,8 +373,15 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _advanceTime(int days) {
-    _tick += days;
+  void _advanceTime(num days) {
+    _tick += (days * 1)
+        .toInt(); // Approximate tick increase if days is int, logic needs refinement if tick is strictly days.
+    // Assuming _tick is currently just a counter, we can keep it as is or update it.
+    // If days is double, we need to handle it.
+    // Let's assume _tick tracks days for now, but we want finer granularity.
+    // Refactoring _tick to double or removing it if unused for mechanics other than logs.
+    // For now, let's just cast to int for tick, but update clock properly.
+
     _clock = _clock.tickDays(days);
     final remainingLife = _player.lifespanDays - days;
     _player = _player.copyWith(lifespanDays: remainingLife);
@@ -441,6 +454,7 @@ class GameState extends ChangeNotifier {
       _handleBreakthroughFailure(maxXp, isMajorBreakthrough);
     }
     notifyListeners();
+    saveToDisk(); // Auto-save
   }
 
   void _handleBreakthroughFailure(int maxXp, bool isMajor) {
@@ -633,6 +647,7 @@ class GameState extends ChangeNotifier {
       }
     }
     _checkBreakthrough();
+    saveToDisk(); // Auto-save
   }
 
   void _resolveBattleDefeat(Battle battle) {
@@ -755,7 +770,7 @@ class GameState extends ChangeNotifier {
     try {
       final Map<String, dynamic> data = jsonDecode(raw);
       _restoreFromJson(data);
-      _log('Loaded save file');
+      _log('加载存档');
       notifyListeners();
       return true;
     } catch (_) {

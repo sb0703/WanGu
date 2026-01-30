@@ -69,9 +69,9 @@ class SectSection extends StatelessWidget {
         onTap: () {
           if (!game.isDead) {
             context.read<GameState>().rest();
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('休息了一会儿，体力已恢复。')));
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.clearSnackBars();
+            messenger.showSnackBar(const SnackBar(content: Text('休息了一会儿，体力已恢复。')));
           }
         },
       ),

@@ -11,8 +11,22 @@ class WorldClock {
   final int day;
   final int hour;
 
-  WorldClock tickDays(int days) {
-    int newDay = day + days;
+  WorldClock tickDays(num days) {
+    // If days is integer, use simple logic, but now we support double
+    // Convert days to hours for precision
+    int hoursToAdd = (days * 24).round();
+    return tickHours(hoursToAdd);
+  }
+  
+  WorldClock tickHours(int hours) {
+    int newHour = hour + hours;
+    int daysToAdd = 0;
+    while (newHour >= 24) {
+      newHour -= 24;
+      daysToAdd++;
+    }
+    
+    int newDay = day + daysToAdd;
     int newMonth = month;
     int newYear = year;
     while (newDay > 30) {
@@ -24,20 +38,7 @@ class WorldClock {
       }
     }
 
-    return WorldClock(year: newYear, month: newMonth, day: newDay, hour: hour);
-  }
-  
-  WorldClock tickHours(int hours) {
-    int newHour = hour + hours;
-    int daysToAdd = 0;
-    while (newHour >= 24) {
-      newHour -= 24;
-      daysToAdd++;
-    }
-    if (daysToAdd > 0) {
-      return tickDays(daysToAdd).copyWith(hour: newHour);
-    }
-    return copyWith(hour: newHour);
+    return WorldClock(year: newYear, month: newMonth, day: newDay, hour: newHour);
   }
   
   WorldClock copyWith({int? year, int? month, int? day, int? hour}) {
