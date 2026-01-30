@@ -10,7 +10,7 @@ class StatCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final stats = player.stats;
+    final stats = player.effectiveStats;
 
     return Container(
       decoration: BoxDecoration(

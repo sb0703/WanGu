@@ -44,7 +44,8 @@
 *   **命运转折**：可能**阴阳逆转**（性别改变）、**虚空流放**（传送至高危区域）、或者遭遇**仇家锁定**（即时战斗）。
 *   **资源危机**：可能导致**储物袋炸裂**（物品丢失）、**本命法宝反噬**（失去武器）、甚至**道侣断义**（精神重创）。
 
-### 8. 系统功能 (New!)
+### 8. 系统功能
+*   **Buff与状态系统**：支持正面/负面/混合类型的状态效果，实时影响角色属性（New!）。
 *   **数据持久化**：支持随时保存和读取游戏进度，本地存储，离线可玩。
 *   **自动存档**：在关键事件（战斗、突破、移动等）后自动保存，防止意外退出导致进度丢失。
 *   **时间流逝**：真实的修仙岁月，每一次移动、修炼、战斗都会消耗时间，寿元倒计时时刻提醒你大道的紧迫。
@@ -66,25 +67,31 @@
 lib/
 ├── src/
 │   ├── data/           # 数据仓库 (Repositories)
-│   │   ├── items_repository.dart
-│   │   ├── enemies_repository.dart
-│   │   ├── maps_repository.dart
-│   │   └── npcs_repository.dart
+│   │   ├── buffs_repository.dart       # Buff数据定义
+│   │   ├── punishments_repository.dart # 惩罚逻辑
+│   │   ├── items_repository.dart       # 物品数据
+│   │   ├── enemies_repository.dart     # 敌人数据
+│   │   ├── maps_repository.dart        # 地图数据
+│   │   └── npcs_repository.dart        # NPC数据
 │   ├── models/         # 数据模型 (Models)
-│   │   ├── player.dart
-│   │   ├── stats.dart
-│   │   ├── realm_stage.dart
-│   │   ├── enemy.dart
-│   │   ├── item.dart
-│   │   ├── map_node.dart
-│   │   └── npc.dart
+│   │   ├── player.dart         # 玩家核心模型
+│   │   ├── buff.dart           # Buff模型
+│   │   ├── stats.dart          # 属性模型
+│   │   ├── realm_stage.dart    # 境界模型
+│   │   ├── enemy.dart          # 敌人模型
+│   │   ├── item.dart           # 物品模型
+│   │   ├── map_node.dart       # 地图节点
+│   │   ├── npc.dart            # NPC模型
+│   │   └── world_clock.dart    # 世界时间
 │   ├── state/          # 状态管理 (Providers)
-│   │   └── game_state.dart
+│   │   ├── game_state.dart     # 核心游戏逻辑
+│   │   └── settings_state.dart # 设置状态
 │   ├── ui/             # 界面 (Views)
 │   │   ├── home/
-│   │   │   ├── sections/   # 主要功能区 (Map, Inventory, Stats, Cultivate)
-│   │   │   └── widgets/    # 通用组件 (BattleOverlay, BreakthroughOverlay, etc.)
-│   │   └── ...
+│   │   │   ├── sections/   # 主要功能区 (Map, Inventory, Stats, Cultivate, Sect)
+│   │   │   └── widgets/    # 通用组件 (BattleOverlay, BreakthroughOverlay, StatCards, etc.)
+│   │   ├── settings/       # 设置界面
+│   │   └── theme/          # 主题定义
 │   └── utils/          # 工具类
 └── main.dart           # 入口文件
 ```
@@ -126,6 +133,8 @@ lib/
     - [x] 浊气与灵气系统 (Risk/Reward)
     - [x] 突破动画与视觉反馈
     - [x] 基础修炼循环 (修炼/排毒)
+    - [x] **Buff与状态系统 (正面/负面/混合)**
+    - [x] **突破失败惩罚实装 (残疾/变身/降维)**
 
 - [ ] **P2: 进阶玩法**
     - [ ] 功法与技能系统

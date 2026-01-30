@@ -81,7 +81,11 @@ class CultivateSection extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.analytics, size: 16, color: Colors.amber),
+                      const Icon(
+                        Icons.analytics,
+                        size: 16,
+                        color: Colors.amber,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '当前突破成功率: ${(game.estimatedBreakthroughChance * 100).toStringAsFixed(1)}%',
@@ -108,7 +112,10 @@ class CultivateSection extends StatelessWidget {
                     icon: const Icon(Icons.bolt, size: 28),
                     label: const Text(
                       '尝试突破',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -174,49 +181,6 @@ class CultivateSection extends StatelessWidget {
                 ),
               ],
             ),
-
-          const SizedBox(height: 24),
-
-          // Debug/Info Text (kept but styled)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.5,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: theme.dividerColor.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: theme.disabledColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '当前目标 (P0)',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.disabledColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '跑通核心循环：修炼获取修为 -> 突破自动判定 -> 记录日志 -> 寿元倒计时',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

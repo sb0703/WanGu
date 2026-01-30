@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../models/buff.dart';
 import '../../../models/player.dart';
 import '../../../state/game_state.dart';
 import '../widgets/stat_cards.dart';
@@ -75,7 +76,7 @@ class _PurityBar extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
-            value: purity / 100.0,
+            value: (purity / 100.0).clamp(0.0, 1.0),
             minHeight: 6,
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation(color),
@@ -97,6 +98,7 @@ class _CharacterStatusCard extends StatelessWidget {
     final theme = Theme.of(context);
     final realm = player.realm;
     final lifeYears = (player.lifespanDays / 365).toStringAsFixed(1);
+    final activeBuffs = player.activeBuffs;
 
     return Container(
       decoration: BoxDecoration(
@@ -194,14 +196,17 @@ class _CharacterStatusCard extends StatelessWidget {
                             theme: theme,
                           ),
                           const SizedBox(height: 4),
-                          _PurityBar(purity: player.stats.purity, theme: theme),
-                          if (player.afflictions.isNotEmpty) ...[
+                          _PurityBar(
+                            purity: player.effectiveStats.purity,
+                            theme: theme,
+                          ),
+                          if (activeBuffs.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Wrap(
                               spacing: 4,
                               runSpacing: 4,
-                              children: player.afflictions.map((a) {
-                                return _AfflictionChip(affliction: a);
+                              children: activeBuffs.map((buff) {
+                                return _BuffChip(buff: buff);
                               }).toList(),
                             ),
                           ],
@@ -377,18 +382,18 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-class _AfflictionChip extends StatelessWidget {
-  const _AfflictionChip({required this.affliction});
+class _BuffChip extends StatelessWidget {
+  const _BuffChip({required this.buff});
 
-  final String affliction;
+  final Buff buff;
 
   @override
   Widget build(BuildContext context) {
-    final info = _getAfflictionInfo(affliction);
-    final color = info.color;
+    final color = _getColor(buff.type);
+    final icon = _getIcon(buff.type);
 
     return InkWell(
-      onTap: () => _showAfflictionDetails(context, info),
+      onTap: () => _showBuffDetails(context),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -400,10 +405,10 @@ class _AfflictionChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(info.icon, size: 12, color: color),
+            Icon(icon, size: 12, color: color),
             const SizedBox(width: 4),
             Text(
-              info.label,
+              buff.name,
               style: TextStyle(
                 fontSize: 10,
                 color: color,
@@ -416,18 +421,73 @@ class _AfflictionChip extends StatelessWidget {
     );
   }
 
-  void _showAfflictionDetails(BuildContext context, _AfflictionInfo info) {
+  Color _getColor(BuffType type) {
+    switch (type) {
+      case BuffType.positive:
+        return Colors.green[700]!;
+      case BuffType.negative:
+        return Colors.red[800]!;
+      case BuffType.mixed:
+        return Colors.purple[800]!;
+    }
+  }
+
+  IconData _getIcon(BuffType type) {
+    switch (type) {
+      case BuffType.positive:
+        return Icons.arrow_upward;
+      case BuffType.negative:
+        return Icons.arrow_downward;
+      case BuffType.mixed:
+        return Icons.shuffle;
+    }
+  }
+
+  void _showBuffDetails(BuildContext context) {
+    final color = _getColor(buff.type);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(info.icon, color: info.color),
+            Icon(_getIcon(buff.type), color: color),
             const SizedBox(width: 8),
-            Text(info.label, style: TextStyle(color: info.color)),
+            Text(buff.name, style: TextStyle(color: color)),
           ],
         ),
-        content: Text(info.description),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(buff.description),
+            const SizedBox(height: 12),
+            const Text('属性影响:', style: TextStyle(fontWeight: FontWeight.bold)),
+            if (buff.statModifiers.maxHp != 0)
+              Text(
+                '气血上限: ${buff.statModifiers.maxHp > 0 ? '+' : ''}${buff.statModifiers.maxHp}',
+              ),
+            if (buff.statModifiers.attack != 0)
+              Text(
+                '攻击: ${buff.statModifiers.attack > 0 ? '+' : ''}${buff.statModifiers.attack}',
+              ),
+            if (buff.statModifiers.defense != 0)
+              Text(
+                '防御: ${buff.statModifiers.defense > 0 ? '+' : ''}${buff.statModifiers.defense}',
+              ),
+            if (buff.statModifiers.speed != 0)
+              Text(
+                '速度: ${buff.statModifiers.speed > 0 ? '+' : ''}${buff.statModifiers.speed}',
+              ),
+            if (buff.statModifiers.insight != 0)
+              Text(
+                '悟性: ${buff.statModifiers.insight > 0 ? '+' : ''}${buff.statModifiers.insight}',
+              ),
+            if (buff.statModifiers.purity != 0)
+              Text(
+                '纯度: ${buff.statModifiers.purity > 0 ? '+' : ''}${buff.statModifiers.purity}',
+              ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -437,51 +497,4 @@ class _AfflictionChip extends StatelessWidget {
       ),
     );
   }
-
-  _AfflictionInfo _getAfflictionInfo(String id) {
-    switch (id) {
-      case 'one_arm':
-        return _AfflictionInfo(
-          label: '肉身残缺',
-          description: '失去一臂，身体不再完整。\n效果：攻击力永久降低 30%。\n来源：突破失败遭受雷劫轰击。',
-          color: Colors.red[800]!,
-          icon: Icons.accessibility_new,
-        );
-      case 'blind':
-        return _AfflictionInfo(
-          label: '五感尽失',
-          description: '双目失明，世界归于黑暗。\n效果：悟性永久降低 50%。\n来源：突破失败遭受反噬。',
-          color: Colors.grey[800]!,
-          icon: Icons.visibility_off,
-        );
-      case 'broken_heart':
-        return _AfflictionInfo(
-          label: '道心破碎',
-          description: '心魔入侵，道心不再稳固。\n效果：悟性永久降低 5 点。\n来源：突破失败被心魔所趁。',
-          color: Colors.purple[800]!,
-          icon: Icons.broken_image,
-        );
-      default:
-        return _AfflictionInfo(
-          label: '未知诅咒',
-          description: '来源不明的神秘诅咒。',
-          color: Colors.black,
-          icon: Icons.error,
-        );
-    }
-  }
-}
-
-class _AfflictionInfo {
-  final String label;
-  final String description;
-  final Color color;
-  final IconData icon;
-
-  _AfflictionInfo({
-    required this.label,
-    required this.description,
-    required this.color,
-    required this.icon,
-  });
 }

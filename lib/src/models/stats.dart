@@ -54,4 +54,18 @@ class Stats {
       purity: purity ?? this.purity,
     );
   }
+
+  Stats operator +(Stats other) {
+    return Stats(
+      maxHp: maxHp + other.maxHp,
+      hp: hp, // Current HP is not affected by stat modifiers directly in this calculation
+      maxSpirit: maxSpirit + other.maxSpirit,
+      spirit: spirit, // Current Spirit is not affected
+      attack: attack + other.attack,
+      defense: defense + other.defense,
+      speed: speed + other.speed,
+      insight: insight + other.insight,
+      purity: purity + other.purity,
+    );
+  }
 }

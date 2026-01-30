@@ -1,3 +1,5 @@
+import '../data/buffs_repository.dart';
+import 'buff.dart';
 import 'item.dart';
 import 'realm_stage.dart';
 import 'stats.dart';
@@ -13,7 +15,7 @@ class Player {
     required this.lifespanDays,
     required this.inventory,
     required this.equipped,
-    this.afflictions = const [], // 负面状态/残缺 (e.g., 'one_arm', 'blind')
+    this.buffIds = const [], // Renamed from afflictions
   });
 
   final String name;
@@ -25,9 +27,22 @@ class Player {
   final int lifespanDays;
   final List<Item> inventory;
   final List<Item> equipped;
-  final List<String> afflictions;
+  final List<String> buffIds;
 
   RealmStage get realm => RealmStage.stages[stageIndex];
+
+  List<Buff> get activeBuffs => buffIds
+      .map((id) => BuffsRepository.get(id))
+      .whereType<Buff>()
+      .toList();
+
+  Stats get effectiveStats {
+    Stats finalStats = stats;
+    for (final buff in activeBuffs) {
+      finalStats = finalStats + buff.statModifiers;
+    }
+    return finalStats;
+  }
 
   // Calculate max XP for current level
   // Base XP * (1 + (level-1) * 0.5) -> Scaling up
@@ -54,7 +69,7 @@ class Player {
     num? lifespanDays,
     List<Item>? inventory,
     List<Item>? equipped,
-    List<String>? afflictions,
+    List<String>? buffIds,
   }) {
     return Player(
       name: name ?? this.name,
@@ -66,7 +81,7 @@ class Player {
       lifespanDays: (lifespanDays ?? this.lifespanDays).toInt(),
       inventory: inventory ?? this.inventory,
       equipped: equipped ?? this.equipped,
-      afflictions: afflictions ?? this.afflictions,
+      buffIds: buffIds ?? this.buffIds,
     );
   }
 }

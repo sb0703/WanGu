@@ -26,12 +26,12 @@ class GameState extends ChangeNotifier {
     : _rng = Random(),
       _tick = 0,
       _clock = const WorldClock(year: 1001, month: 1, day: 1),
-      _player = Player(
+      _player = const Player(
         name: '无名散修',
         stageIndex: 0,
         xp: 0,
         lifespanDays: 80 * 365, // 80年寿元（按天计）
-        stats: const Stats(
+        stats: Stats(
           maxHp: 80,
           hp: 80,
           maxSpirit: 50,
@@ -42,8 +42,8 @@ class GameState extends ChangeNotifier {
           insight: 4,
           purity: 100,
         ),
-        inventory: const [],
-        equipped: const [],
+        inventory: [],
+        equipped: [],
       ),
       _logs = const [] {
     _mapNodes = _seedMap();
@@ -93,9 +93,10 @@ class GameState extends ChangeNotifier {
     final isMajorBreakthrough = _player.level >= 10;
     double rate;
 
+    // Use effectiveStats for insight/purity calculations
     if (isMajorBreakthrough) {
       // Major Breakthrough Base
-      rate = 0.6 * (0.72 + _player.stats.insight * 0.02);
+      rate = 0.6 * (0.72 + _player.effectiveStats.insight * 0.02);
 
       // Check pills (Logic duplicated for display, ideally refactor to helper)
       final hasPill =
@@ -108,11 +109,11 @@ class GameState extends ChangeNotifier {
       if (hasPill) rate += 0.3;
     } else {
       // Minor Breakthrough Base
-      rate = 0.9 + _player.stats.insight * 0.01;
+      rate = 0.9 + _player.effectiveStats.insight * 0.01;
     }
 
     // Apply Purity Factor to EVERYTHING
-    final purityFactor = _player.stats.purity / 100.0;
+    final purityFactor = _player.effectiveStats.purity / 100.0;
     rate *= purityFactor;
 
     return rate.clamp(0.01, 0.95);
@@ -160,8 +161,8 @@ class GameState extends ChangeNotifier {
       return;
     }
 
-    // Base XP gain
-    int baseGain = 6 + _player.stats.insight;
+    // Base XP gain (Use effective insight)
+    int baseGain = 6 + _player.effectiveStats.insight;
 
     // Decrease XP gain based on stage index (Diminishing returns)
     double efficiency = (1.0 - (_player.stageIndex * 0.2)).clamp(0.1, 1.0);
@@ -170,7 +171,6 @@ class GameState extends ChangeNotifier {
     if (gainedXp < 1) gainedXp = 1;
 
     // Purity Penalty: -1 per day (Base)
-    // Higher insight might reduce impurity intake slightly? No, let's keep it simple.
     int purityLoss = 1 * days;
 
     // Cap XP at max
@@ -206,8 +206,8 @@ class GameState extends ChangeNotifier {
     }
 
     // Base Purity Gain
-    // Insight helps purify faster
-    int baseRecovery = 2 + (_player.stats.insight ~/ 5);
+    // Insight helps purify faster (Use effective insight)
+    int baseRecovery = 2 + (_player.effectiveStats.insight ~/ 5);
     int totalRecovery = baseRecovery * days;
 
     _player = _player.copyWith(
@@ -287,10 +287,14 @@ class GameState extends ChangeNotifier {
 
   void rest({int days = 2}) {
     if (isDead) return;
-    final newHp = (_player.stats.hp + 10 * days).clamp(0, _player.stats.maxHp);
+    // Recover based on effective Max HP/Spirit
+    final newHp = (_player.stats.hp + 10 * days).clamp(
+      0,
+      _player.effectiveStats.maxHp,
+    );
     final newSpirit = (_player.stats.spirit + 8 * days).clamp(
       0,
-      _player.stats.maxSpirit,
+      _player.effectiveStats.maxSpirit,
     );
     _player = _player.copyWith(
       stats: _player.stats.copyWith(hp: newHp, spirit: newSpirit),
@@ -520,13 +524,13 @@ class GameState extends ChangeNotifier {
     final enemy = _rollEnemy(node.danger);
     _log('遭遇 ${enemy.name}！准备战斗！');
 
-    // Start Battle State
+    // Start Battle State (Use effective stats for max values)
     _currentBattle = Battle(
       enemy: enemy,
       playerHp: _player.stats.hp,
-      playerMaxHp: _player.stats.maxHp,
+      playerMaxHp: _player.effectiveStats.maxHp,
       playerSpirit: _player.stats.spirit,
-      playerMaxSpirit: _player.stats.maxSpirit,
+      playerMaxSpirit: _player.effectiveStats.maxSpirit,
     );
     notifyListeners();
   }
@@ -539,11 +543,11 @@ class GameState extends ChangeNotifier {
 
     // Player Turn
     // Simple logic for now: Attack
-    // Calculate stats
-    final playerAtkBase = (_player.stats.attack + _itemAttackBonus())
+    // Calculate stats (Use effective stats for battle)
+    final playerAtkBase = (_player.effectiveStats.attack + _itemAttackBonus())
         .toDouble();
     final enemyDef = enemy.stats.defense.toDouble();
-    final playerSpeed = _player.stats.speed;
+    final playerSpeed = _player.effectiveStats.speed;
     final enemySpeed = enemy.stats.speed;
 
     // Spirit Usage
@@ -582,7 +586,9 @@ class GameState extends ChangeNotifier {
 
     // Enemy Turn
     final enemyAtk = enemy.stats.attack.toDouble();
-    final playerDef = (_player.stats.defense + _itemDefenseBonus()).toDouble();
+    // Use effective defense
+    final playerDef = (_player.effectiveStats.defense + _itemDefenseBonus())
+        .toDouble();
 
     double enemyAtkThisRound = enemyAtk * (0.9 + _rng.nextDouble() * 0.2);
     final enemyIsCrit = _rng.nextDouble() < 0.05;
@@ -693,9 +699,9 @@ class GameState extends ChangeNotifier {
     _currentBattle = Battle(
       enemy: enemy,
       playerHp: _player.stats.hp,
-      playerMaxHp: _player.stats.maxHp,
+      playerMaxHp: _player.effectiveStats.maxHp,
       playerSpirit: _player.stats.spirit,
-      playerMaxSpirit: _player.stats.maxSpirit,
+      playerMaxSpirit: _player.effectiveStats.maxSpirit,
     );
     notifyListeners();
   }
@@ -816,7 +822,7 @@ class GameState extends ChangeNotifier {
       },
       'inventory': player.inventory.map((i) => i.id).toList(),
       'equipped': player.equipped.map((i) => i.id).toList(),
-      'afflictions': player.afflictions,
+      'buffIds': player.buffIds,
     };
   }
 
@@ -915,8 +921,19 @@ class GameState extends ChangeNotifier {
     final equippedIds =
         (data['equipped'] as List?)?.map((e) => e.toString()).toList() ?? [];
 
+    // Handle backward compatibility: check for afflictions if buffIds missing
+    List<String> buffs = [];
+    if (data.containsKey('buffIds')) {
+      buffs =
+          (data['buffIds'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    } else if (data.containsKey('afflictions')) {
+      buffs =
+          (data['afflictions'] as List?)?.map((e) => e.toString()).toList() ??
+          [];
+    }
+
     return Player(
-      name: data['name']?.toString() ?? '鏃犲悕鏁ｄ慨',
+      name: data['name']?.toString() ?? '无名散修',
       gender: data['gender']?.toString() ?? '男',
       stageIndex: (data['stageIndex'] as num?)?.toInt() ?? 0,
       level: (data['level'] as num?)?.toInt() ?? 1,
@@ -931,9 +948,7 @@ class GameState extends ChangeNotifier {
           .map((id) => ItemsRepository.get(id))
           .whereType<Item>()
           .toList(),
-      afflictions:
-          (data['afflictions'] as List?)?.map((e) => e.toString()).toList() ??
-          const [],
+      buffIds: buffs,
     );
   }
 

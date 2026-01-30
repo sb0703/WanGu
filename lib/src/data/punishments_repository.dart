@@ -34,10 +34,10 @@ class PunishmentsRepository {
        
        if (severeRoll == 0) {
          // Limb Loss (Attack reduced)
-         if (!player.afflictions.contains('one_arm')) {
+         if (!player.buffIds.contains('missing_limb')) {
             newPlayer = player.copyWith(
-              afflictions: [...player.afflictions, 'one_arm'],
-              stats: player.stats.copyWith(attack: (player.stats.attack * 0.7).toInt()),
+              buffIds: [...player.buffIds, 'missing_limb'],
+              // Stats handled by buff
               xp: (player.xp - penaltyXp).clamp(0, maxXp),
             );
             message = '【肉身残缺】雷劫落下，你下意识抵挡。\n烟消云散后，你空荡荡的袖管随风飘荡。\n攻击力大幅下降！';
@@ -49,10 +49,10 @@ class PunishmentsRepository {
          }
        } else if (severeRoll == 1) {
          // Sensory Deprivation (Blindness)
-         if (!player.afflictions.contains('blind')) {
+         if (!player.buffIds.contains('blind')) {
             newPlayer = player.copyWith(
-              afflictions: [...player.afflictions, 'blind'],
-              stats: player.stats.copyWith(insight: (player.stats.insight * 0.5).toInt()),
+              buffIds: [...player.buffIds, 'blind'],
+              // Stats handled by buff
               xp: (player.xp - penaltyXp).clamp(0, maxXp),
             );
             message = '【五感尽失】双目突然刺痛流血，眼前世界归于黑暗。\n你虽有修为，此刻却如盲人摸象。\n悟性大幅下降！';
@@ -63,16 +63,10 @@ class PunishmentsRepository {
          }
        } else if (severeRoll == 2) {
          // Bestial Regression (Beast Form)
-         if (!player.afflictions.contains('beast_form')) {
+         if (!player.buffIds.contains('beast_form')) {
             newPlayer = player.copyWith(
-              afflictions: [...player.afflictions, 'beast_form'],
-              stats: player.stats.copyWith(
-                attack: (player.stats.attack * 1.2).toInt(),
-                speed: (player.stats.speed * 1.2).toInt(),
-                insight: (player.stats.insight * 0.7).toInt(),
-                maxSpirit: (player.stats.maxSpirit * 0.8).toInt(),
-                spirit: (player.stats.spirit * 0.8).clamp(0, (player.stats.maxSpirit * 0.8).toInt()).toInt(),
-              ),
+              buffIds: [...player.buffIds, 'beast_form'],
+              // Stats handled by buff
               xp: (player.xp - penaltyXp).clamp(0, maxXp),
             );
             message = '【半妖化】灵气失控激活了你血脉中潜藏的兽性。\n手臂长出鳞片，喉咙发出嘶吼。\n攻击/速度上升，悟性/灵力下降！';
@@ -86,16 +80,17 @@ class PunishmentsRepository {
          final newGender = player.gender == '男' ? '女' : '男';
          newPlayer = player.copyWith(
            gender: newGender,
+           buffIds: [...player.buffIds, 'yin_yang_reversal'], // Add buff for flavor/tracking
            xp: (player.xp - penaltyXp).clamp(0, maxXp),
          );
          message = '【阴阳逆转】阴阳二气在体内乱窜，重塑了你的肉身。\n你惊讶地发现声音变了，身体特征也发生了翻天覆地的变化。\n你变成了$newGender性！';
          logMessage = '突破惨败！阴阳逆转，变为$newGender儿身！';
        } else {
          // Dao Heart Broken
-          if (!player.afflictions.contains('broken_heart')) {
+          if (!player.buffIds.contains('broken_dao')) {
             newPlayer = player.copyWith(
-              afflictions: [...player.afflictions, 'broken_heart'],
-              stats: player.stats.copyWith(insight: max(1, player.stats.insight - 5)),
+              buffIds: [...player.buffIds, 'broken_dao'],
+              // Stats handled by buff
               xp: (player.xp - penaltyXp).clamp(0, maxXp),
             );
             message = '【道心破碎】脑海中一片空白。\n你明明记得功法口诀，身体却僵硬得像块木头。\n悟性永久降低！';
@@ -203,16 +198,19 @@ class PunishmentsRepository {
        } else if (mediumRoll == 6) {
          // Nemesis Alert
          spawnNemesis = true;
-         newPlayer = player.copyWith(xp: (player.xp - penaltyXp).clamp(0, maxXp));
+         newPlayer = player.copyWith(
+             buffIds: [...player.buffIds, 'nemesis_lock'], // Add nemesis lock buff
+             xp: (player.xp - penaltyXp).clamp(0, maxXp)
+         );
          message = '【仇家锁定】你的护体金光破碎，气息外泄。\n方圆百里的修士都感应到了这里有一只“肥羊”刚刚渡劫失败。\n仇家正在逼近！';
          logMessage = '突破失败，引来仇家！';
        } else if (mediumRoll == 7) {
          // Void Banishment
          teleportToDanger = true;
-         if (!player.afflictions.contains('void_sickness')) {
+         if (!player.buffIds.contains('void_sickness')) {
              newPlayer = player.copyWith(
-               afflictions: [...player.afflictions, 'void_sickness'],
-               stats: player.stats.copyWith(maxHp: (player.stats.maxHp * 0.9).toInt()),
+               buffIds: [...player.buffIds, 'void_sickness'],
+               // Stats handled by buff
                xp: (player.xp - penaltyXp).clamp(0, maxXp),
              );
          } else {
@@ -222,9 +220,9 @@ class PunishmentsRepository {
          logMessage = '突破失败，流放虚空！';
        } else if (mediumRoll == 8) {
          // Cursed Atmosphere
-         if (!player.afflictions.contains('cursed_land')) {
+         if (!player.buffIds.contains('cursed_land')) {
              newPlayer = player.copyWith(
-               afflictions: [...player.afflictions, 'cursed_land'],
+               buffIds: [...player.buffIds, 'cursed_land'],
                xp: (player.xp - penaltyXp).clamp(0, maxXp),
              );
              message = '【天罚力场】因为你的逆天之举，天道锁死了这片区域的灵气。\n你感到呼吸困难，修炼将变得异常艰难！';
@@ -235,9 +233,9 @@ class PunishmentsRepository {
          }
        } else {
          // Karma Debt
-         if (!player.afflictions.contains('karma_debt')) {
+         if (!player.buffIds.contains('karma_debt')) {
              newPlayer = player.copyWith(
-               afflictions: [...player.afflictions, 'karma_debt'],
+               buffIds: [...player.buffIds, 'karma_debt'],
                xp: (player.xp - penaltyXp).clamp(0, maxXp),
              );
              message = '【因果缠身】为了在雷劫中活下来，你在恍惚中与某个不可名状的存在签订了契约。\n现在，讨债的时刻倒计时开始了。';
@@ -247,14 +245,14 @@ class PunishmentsRepository {
              logMessage = '突破失败，因果加深。';
          }
        }
-    }
+    } 
     // 3. Light Punishment (Standard XP Loss + HP Damage + Minor Afflictions)
     else {
       // Standard XP penalty
       // Add 'soul_parasite' chance (20%)
-      if (rng.nextDouble() < 0.2 && !player.afflictions.contains('soul_parasite')) {
+      if (rng.nextDouble() < 0.2 && !player.buffIds.contains('soul_parasite')) {
           newPlayer = player.copyWith(
-            afflictions: [...player.afflictions, 'soul_parasite'],
+            buffIds: [...player.buffIds, 'soul_parasite'],
             xp: (player.xp - penaltyXp).clamp(0, maxXp),
             stats: player.stats.copyWith(hp: 1),
           );
