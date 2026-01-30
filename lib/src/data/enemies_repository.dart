@@ -1,69 +1,57 @@
 import 'dart:math';
 
 import '../models/enemy.dart';
-import '../models/stats.dart';
+import 'enemies/mortal_beasts.dart';
+import 'enemies/spirit_beasts.dart';
+import 'enemies/evil_spirits.dart';
+import 'enemies/demons.dart';
+import 'enemies/bosses.dart';
 
 class EnemiesRepository {
   static final Random _rng = Random();
 
-  static Enemy rollEnemy(int danger) {
-    // 简单的敌人池，根据危险度筛选
-    final candidates = [
-      // 低级怪 (1-3)
-      if (danger <= 3) ...[
-        Enemy(
-          name: '狂暴野猪',
-          stats: const Stats(maxHp: 40, hp: 40, maxSpirit: 0, spirit: 0, attack: 10, defense: 3, speed: 5, insight: 0),
-          loot: const ['herb'],
-          xpReward: 10,
-        ),
-        Enemy(
-          name: '青竹蛇',
-          stats: const Stats(maxHp: 30, hp: 30, maxSpirit: 10, spirit: 10, attack: 15, defense: 1, speed: 12, insight: 0),
-          loot: const ['herb'],
-          xpReward: 12,
-        ),
-      ],
-      // 中级怪 (3-6)
-      if (danger >= 3 && danger <= 6) ...[
-        Enemy(
-          name: '铁背熊',
-          stats: const Stats(maxHp: 120, hp: 120, maxSpirit: 0, spirit: 0, attack: 25, defense: 15, speed: 4, insight: 0),
-          loot: const ['rusty_sword', 'herb'],
-          xpReward: 35,
-        ),
-        Enemy(
-          name: '嗜血蝙蝠',
-          stats: const Stats(maxHp: 60, hp: 60, maxSpirit: 20, spirit: 20, attack: 22, defense: 5, speed: 15, insight: 0),
-          loot: const [],
-          xpReward: 25,
-        ),
-      ],
-      // 高级怪 (6+)
-      if (danger >= 6) ...[
-        Enemy(
-          name: '鬼面蜘蛛',
-          stats: const Stats(maxHp: 200, hp: 200, maxSpirit: 50, spirit: 50, attack: 40, defense: 10, speed: 18, insight: 0),
-          loot: const ['cloth_robe', 'herb'],
-          xpReward: 60,
-        ),
-        Enemy(
-          name: '赤炎虎王',
-          stats: const Stats(maxHp: 350, hp: 350, maxSpirit: 100, spirit: 100, attack: 55, defense: 25, speed: 20, insight: 0),
-          loot: const ['rusty_sword', 'cloth_robe', 'herb'],
-          xpReward: 120,
-        ),
-      ],
-    ];
+  static final List<Enemy> _allEnemies = [
+    ...mortalBeasts,
+    ...spiritBeasts,
+    ...evilSpirits,
+    ...demons,
+    ...bosses,
+  ];
 
+  static final Map<String, Enemy> _enemiesMap = {
+    for (var e in _allEnemies) e.id: e,
+  };
+
+  static Enemy? get(String id) => _enemiesMap[id];
+
+  static List<Enemy> getAll() => _allEnemies;
+
+  static Enemy rollEnemy(int danger) {
+    // Filter enemies based on danger level
+    // We allow a small variance: danger - 1 to danger + 1
+    // If danger is high (e.g. 10), we look for 9-10.
+    
+    var candidates = _allEnemies.where((e) {
+      return (e.dangerLevel - danger).abs() <= 1;
+    }).toList();
+
+    // Fallback 1: Widen range
     if (candidates.isEmpty) {
-      // Fallback
-      return Enemy(
-        name: '野狗',
-        stats: const Stats(maxHp: 30, hp: 30, maxSpirit: 0, spirit: 0, attack: 8, defense: 2, speed: 6, insight: 0),
-        loot: const [],
-        xpReward: 5,
-      );
+      candidates = _allEnemies.where((e) {
+        return (e.dangerLevel - danger).abs() <= 2;
+      }).toList();
+    }
+
+    // Fallback 2: Any enemy <= danger (for high danger maps that might lack specific high level content)
+    if (candidates.isEmpty) {
+      candidates = _allEnemies.where((e) {
+        return e.dangerLevel <= danger;
+      }).toList();
+    }
+
+    // Fallback 3: Return *something*
+    if (candidates.isEmpty) {
+       return _allEnemies.first; 
     }
 
     return candidates[_rng.nextInt(candidates.length)];

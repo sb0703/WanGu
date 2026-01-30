@@ -1,87 +1,21 @@
 import '../models/item.dart';
+import 'items/currencies.dart';
+import 'items/pills.dart';
+import 'items/materials.dart';
+import 'items/equipment.dart';
+import 'items/talismans.dart';
+import 'items/legacy.dart';
+import 'items/containers.dart';
 
 class ItemsRepository {
-  static const Map<String, Item> _items = {
-    'herb': Item(
-      id: 'herb',
-      name: '疗伤草',
-      description: '服用可恢复气血。',
-      type: ItemType.consumable,
-      hpBonus: 25,
-    ),
-    'rusty_sword': Item(
-      id: 'rusty_sword',
-      name: '生锈铁剑',
-      description: '旧铁剑，聊胜于无。',
-      type: ItemType.weapon,
-      attackBonus: 5,
-    ),
-    'cloth_robe': Item(
-      id: 'cloth_robe',
-      name: '粗布护衣',
-      description: '最简单的护身布衣，略有防护。',
-      type: ItemType.armor,
-      defenseBonus: 3,
-    ),
-    // Consumables - Elixirs
-    'qi_pill': Item(
-      id: 'qi_pill',
-      name: '聚气丹',
-      description: '初级丹药，服用可少量提升修为，亦可用于突破。',
-      type: ItemType.consumable,
-      hpBonus: 10,
-    ),
-    'foundation_pill': Item(
-      id: 'foundation_pill',
-      name: '筑基丹',
-      description: '筑基期修士梦寐以求的丹药，大幅增加突破成功率。',
-      type: ItemType.consumable,
-      hpBonus: 50,
-    ),
-    // Weapons
-    'iron_sword': Item(
-      id: 'iron_sword',
-      name: '精铁剑',
-      description: '百炼精铁打造的长剑，锋利无比。',
-      type: ItemType.weapon,
-      attackBonus: 12,
-    ),
-    'spirit_sword': Item(
-      id: 'spirit_sword',
-      name: '青云灵剑',
-      description: '注入了灵气的宝剑，可断金碎石。',
-      type: ItemType.weapon,
-      attackBonus: 25,
-    ),
-    'ancient_blade': Item(
-      id: 'ancient_blade',
-      name: '古纹重刀',
-      description: '遗迹中发现的古老兵器，威力巨大但沉重。',
-      type: ItemType.weapon,
-      attackBonus: 40,
-    ),
-    // Armors
-    'leather_armor': Item(
-      id: 'leather_armor',
-      name: '蛮兽皮甲',
-      description: '使用妖兽皮革制成，防御力不错。',
-      type: ItemType.armor,
-      defenseBonus: 8,
-    ),
-    'spirit_robe': Item(
-      id: 'spirit_robe',
-      name: '流云法袍',
-      description: '刻有防御法阵的道袍，水火不侵。',
-      type: ItemType.armor,
-      defenseBonus: 15,
-    ),
-    'dragon_scale_mail': Item(
-      id: 'dragon_scale_mail',
-      name: '龙鳞战甲',
-      description: '传说中含有龙血妖兽鳞片制成的战甲。',
-      type: ItemType.armor,
-      defenseBonus: 30,
-    ),
+  static final Map<String, Item> _items = {
+    ...currencyItems,
+    ...pillItems,
+    ...materialItems,
+    ...equipmentItems,
+    ...talismanItems,
+    ...legacyItems,
+    ...containerItems,
   };
 
   static Item? get(String id) => _items[id];

@@ -2,13 +2,13 @@ class Stats {
   const Stats({
     required this.maxHp,
     required this.hp,
-    required this.maxSpirit,
-    required this.spirit,
+    this.maxSpirit = 0,
+    this.spirit = 0,
     required this.attack,
     required this.defense,
     required this.speed,
-    required this.insight,
-    this.purity = 100, // 灵气纯度 0-100
+    this.insight = 0,
+    this.purity = 0,
   });
 
   final int maxHp;
