@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../state/game_state.dart';
+import '../../sect/mission_hall_screen.dart';
 import 'map_section.dart';
 
 class SectSection extends StatelessWidget {
@@ -71,7 +72,9 @@ class SectSection extends StatelessWidget {
             context.read<GameState>().rest();
             final messenger = ScaffoldMessenger.of(context);
             messenger.clearSnackBars();
-            messenger.showSnackBar(const SnackBar(content: Text('休息了一会儿，体力已恢复。')));
+            messenger.showSnackBar(
+              const SnackBar(content: Text('休息了一会儿，体力已恢复。')),
+            );
           }
         },
       ),
@@ -80,7 +83,12 @@ class SectSection extends StatelessWidget {
         description: '领取宗门任务，赚取贡献',
         icon: Icons.assignment,
         color: const Color(0xFFAB47BC),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MissionHallScreen()),
+          );
+        },
       ),
     ];
 

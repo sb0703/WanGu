@@ -1,0 +1,155 @@
+
+part of '../game_state.dart';
+
+extension MissionLogic on GameState {
+  // 接取任务
+  void acceptMission(Mission mission) {
+    if (_activeMissions.any((m) => m.missionId == mission.id)) {
+      _log('已接取该任务：${mission.title}');
+      return;
+    }
+    
+    final active = ActiveMission(missionId: mission.id);
+    _activeMissions = [..._activeMissions, active]; // Reassign to trigger update if watched
+    _log('接取任务：${mission.title}');
+    
+    // 如果是收集任务，立即检查背包
+    if (mission.type == MissionType.collect) {
+      _updateCollectionProgressFor(active, mission);
+    }
+    
+    notify();
+    saveToDisk();
+  }
+
+  // 放弃任务
+  void abandonMission(ActiveMission active) {
+    final mission = MissionsRepository.getMissionById(active.missionId);
+    _activeMissions = [..._activeMissions]..remove(active);
+    if (mission != null) {
+      _log('放弃任务：${mission.title}');
+    }
+    notify();
+    saveToDisk();
+  }
+
+  // 提交任务
+  void submitMission(ActiveMission active) {
+    final mission = MissionsRepository.getMissionById(active.missionId);
+    if (mission == null) return;
+
+    // 再次更新状态确保准确
+    if (mission.type == MissionType.collect) {
+      _updateCollectionProgressFor(active, mission);
+    }
+
+    if (!active.isCompleted) {
+      _log('任务目标尚未达成');
+      return;
+    }
+
+    // 扣除收集物品
+    if (mission.type == MissionType.collect) {
+      if (!_hasItemCount(mission.targetId, mission.targetCount)) {
+         _log('缺少任务物品：${mission.targetName}');
+         return;
+      }
+      _removeItemsById(mission.targetId, mission.targetCount);
+      _log('上交了 ${mission.targetCount} 个 ${mission.targetName}');
+    }
+
+    // 发放奖励
+    _distributeRewards(mission.reward);
+    
+    // 移除任务并记录
+    _activeMissions = [..._activeMissions]..remove(active);
+    _completedMissionIds = {..._completedMissionIds, mission.id};
+    _log('任务完成：${mission.title}！');
+    
+    notify();
+    saveToDisk();
+  }
+  
+  void _distributeRewards(MissionReward reward) {
+    if (reward.contribution > 0) {
+      _player = _player.copyWith(contribution: _player.contribution + reward.contribution);
+      _log('获得宗门贡献 ${reward.contribution}');
+    }
+    if (reward.exp > 0) {
+      final newXp = _player.xp + reward.exp;
+      // Simple XP add, capping logic is in cultivation but let's allow overflow or cap here
+      final maxXp = _player.currentMaxXp;
+      _player = _player.copyWith(xp: min(newXp, maxXp));
+      _log('获得修为 ${reward.exp}');
+    }
+    for (final itemId in reward.itemIds) {
+      _addItemById(itemId);
+      _log('获得奖励物品：${ItemsRepository.get(itemId)?.name ?? itemId}');
+    }
+  }
+
+  // 更新讨伐进度 (需在 BattleLogic 中调用)
+  void updateHuntProgress(String enemyId) {
+    bool changed = false;
+    // 使用新的列表以避免修改正在遍历的列表（虽然这里只修改内部属性）
+    for (final active in _activeMissions) {
+      final mission = MissionsRepository.getMissionById(active.missionId);
+      if (mission != null && mission.type == MissionType.hunt && mission.targetId == enemyId) {
+        if (active.currentCount < mission.targetCount) {
+          active.currentCount++;
+          if (active.currentCount >= mission.targetCount) {
+            active.isCompleted = true;
+            _log('任务目标达成：${mission.title}');
+          }
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      notify();
+      saveToDisk();
+    }
+  }
+  
+  // 更新所有收集任务进度 (需在 InventoryLogic 或 UI 中调用)
+  void updateAllCollectionProgress() {
+    bool changed = false;
+    for (final active in _activeMissions) {
+      final mission = MissionsRepository.getMissionById(active.missionId);
+      if (mission != null && mission.type == MissionType.collect) {
+        final oldCompleted = active.isCompleted;
+        final oldCount = active.currentCount;
+        _updateCollectionProgressFor(active, mission);
+        if (active.isCompleted != oldCompleted || active.currentCount != oldCount) {
+          changed = true;
+        }
+      }
+    }
+    if (changed) notify();
+  }
+
+  void _updateCollectionProgressFor(ActiveMission active, Mission mission) {
+    // 计算背包中有多少个目标物品
+    int count = _player.inventory.where((i) => i.id == mission.targetId).length;
+    active.currentCount = count;
+    active.isCompleted = count >= mission.targetCount;
+  }
+
+  // Helpers
+  bool _hasItemCount(String itemId, int count) {
+    return _player.inventory.where((i) => i.id == itemId).length >= count;
+  }
+
+  void _removeItemsById(String itemId, int count) {
+    var remaining = count;
+    final newInventory = [..._player.inventory];
+    newInventory.removeWhere((item) {
+      if (remaining > 0 && item.id == itemId) {
+        remaining--;
+        return true;
+      }
+      return false;
+    });
+    _player = _player.copyWith(inventory: newInventory);
+  }
+}

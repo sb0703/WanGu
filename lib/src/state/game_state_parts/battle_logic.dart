@@ -276,6 +276,9 @@ extension BattleLogic on GameState {
     );
     _log('击败 ${enemy.name}，获得 ${enemy.xpReward} 修为');
 
+    // Update Hunt Missions
+    updateHuntProgress(enemy.id);
+
     // Loot
     if (enemy.loot.isNotEmpty && _rng.nextDouble() < 0.3) {
       // Create weighted candidates list

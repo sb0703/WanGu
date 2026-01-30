@@ -7,11 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/enemies_repository.dart';
 import '../data/items_repository.dart';
+import '../data/missions_repository.dart';
 import '../data/maps_repository.dart';
 import '../data/npcs_repository.dart';
 import '../data/punishments_repository.dart';
 import '../models/battle.dart';
 import '../models/enemy.dart';
+import '../models/mission.dart';
 import '../models/npc.dart';
 import '../models/item.dart';
 import '../models/log_entry.dart';
@@ -26,6 +28,7 @@ part 'game_state_parts/inventory_logic.dart';
 part 'game_state_parts/battle_logic.dart';
 part 'game_state_parts/cultivation_logic.dart';
 part 'game_state_parts/exploration_logic.dart';
+part 'game_state_parts/mission_logic.dart';
 part 'game_state_parts/persistence_logic.dart';
 
 class GameState extends ChangeNotifier {
@@ -86,6 +89,10 @@ class GameState extends ChangeNotifier {
   bool _breakthroughSuccess = false;
   String _breakthroughMessage = '';
 
+  // Mission State
+  List<ActiveMission> _activeMissions = [];
+  Set<String> _completedMissionIds = {};
+
   // Public getters
   int get tick => _tick;
   WorldClock get clock => _clock;
@@ -93,6 +100,9 @@ class GameState extends ChangeNotifier {
   MapNode get currentNode => _currentNode;
   List<MapNode> get mapNodes => List.unmodifiable(_mapNodes);
   List<LogEntry> get logs => List.unmodifiable(_logs);
+
+  List<ActiveMission> get activeMissions => List.unmodifiable(_activeMissions);
+  Set<String> get completedMissionIds => Set.unmodifiable(_completedMissionIds);
 
   bool get isDead => _player.lifespanDays <= 0 || _player.stats.hp <= 0;
   bool get isGameOver => isDead;
@@ -190,11 +200,33 @@ class GameState extends ChangeNotifier {
   }
 
   bool _addItem(Item item) {
+    // 1. Check for stackable existing item
+    if (item.stackable) {
+      final index = _player.inventory.indexWhere((i) => i.id == item.id);
+      if (index != -1) {
+        final existing = _player.inventory[index];
+        final newCount = existing.count + item.count;
+        // Limit max stack? For now let's say 999 or unlimited.
+        // Let's go with unlimited for simplicity or 999.
+        final newItem = existing.copyWith(count: newCount);
+        
+        final newInventory = [..._player.inventory];
+        newInventory[index] = newItem;
+        _player = _player.copyWith(inventory: newInventory);
+        
+        updateAllCollectionProgress();
+        return true;
+      }
+    }
+
+    // 2. New slot required
     if (_player.inventory.length >= bagCapacity) {
       _log('包裹已满，放弃了 ${item.name}');
       return false;
     }
+    
     _player = _player.copyWith(inventory: [..._player.inventory, item]);
+    updateAllCollectionProgress();
     return true;
   }
 

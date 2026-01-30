@@ -58,6 +58,7 @@ class Item {
     this.skillDesc,
     this.skillCost = 0,
     this.skillDamageMultiplier = 1.0,
+    this.count = 1,
   });
 
   final String id; // ID
@@ -76,9 +77,60 @@ class Item {
   final int levelReq; // 等级要求
   final int price; // 价格 (灵石/金币)
 
+  // 堆叠数量
+  final int count;
+
+  bool get stackable => type != ItemType.equipment && type != ItemType.storage;
+
   // 法术/技能相关 (通常用于武器或特定法宝)
   final String? skillName;
   final String? skillDesc;
   final int skillCost; // 灵力消耗
   final double skillDamageMultiplier; // 技能伤害倍率 (基于攻击力)
+
+  Item copyWith({
+    String? id,
+    String? name,
+    String? description,
+    ItemType? type,
+    ItemRarity? rarity,
+    EquipmentSlot? slot,
+    ElementType? element,
+    int? attackBonus,
+    int? defenseBonus,
+    int? hpBonus,
+    int? spiritBonus,
+    int? speed,
+    int? spaceBonus,
+    int? levelReq,
+    int? price,
+    String? skillName,
+    String? skillDesc,
+    int? skillCost,
+    double? skillDamageMultiplier,
+    int? count,
+  }) {
+    return Item(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      type: type ?? this.type,
+      rarity: rarity ?? this.rarity,
+      slot: slot ?? this.slot,
+      element: element ?? this.element,
+      attackBonus: attackBonus ?? this.attackBonus,
+      defenseBonus: defenseBonus ?? this.defenseBonus,
+      hpBonus: hpBonus ?? this.hpBonus,
+      spiritBonus: spiritBonus ?? this.spiritBonus,
+      speed: speed ?? this.speed,
+      spaceBonus: spaceBonus ?? this.spaceBonus,
+      levelReq: levelReq ?? this.levelReq,
+      price: price ?? this.price,
+      skillName: skillName ?? this.skillName,
+      skillDesc: skillDesc ?? this.skillDesc,
+      skillCost: skillCost ?? this.skillCost,
+      skillDamageMultiplier: skillDamageMultiplier ?? this.skillDamageMultiplier,
+      count: count ?? this.count,
+    );
+  }
 }

@@ -58,6 +58,8 @@ extension PersistenceLogic on GameState {
       'currentNodeId': _currentNode.id,
       'playerGridPos': {'x': _playerGridPos.x, 'y': _playerGridPos.y},
       'visited': _visitedTiles.map((p) => [p.x, p.y]).toList(),
+      'activeMissions': _activeMissions.map((m) => m.toJson()).toList(),
+      'completedMissionIds': _completedMissionIds.toList(),
       'logs': _logs.map((l) => {'message': l.message, 'tick': l.tick}).toList(),
     };
   }
@@ -69,6 +71,7 @@ extension PersistenceLogic on GameState {
       'stageIndex': player.stageIndex,
       'level': player.level,
       'xp': player.xp,
+      'contribution': player.contribution,
       'lifespanDays': player.lifespanDays,
       'stats': {
         'maxHp': player.stats.maxHp,
@@ -137,6 +140,25 @@ extension PersistenceLogic on GameState {
       _visitedTiles = {_playerGridPos};
     }
 
+    final activeMissionsList = data['activeMissions'];
+    if (activeMissionsList is List) {
+      _activeMissions = activeMissionsList
+          .map(
+            (e) => e is Map<String, dynamic> ? ActiveMission.fromJson(e) : null,
+          )
+          .whereType<ActiveMission>()
+          .toList();
+    } else {
+      _activeMissions = [];
+    }
+
+    final completedList = data['completedMissionIds'];
+    if (completedList is List) {
+      _completedMissionIds = completedList.map((e) => e.toString()).toSet();
+    } else {
+      _completedMissionIds = {};
+    }
+
     final logList = data['logs'];
     if (logList is List) {
       _logs = logList
@@ -177,10 +199,49 @@ extension PersistenceLogic on GameState {
       purity: (statsMap['purity'] as num?)?.toInt() ?? 100,
     );
 
-    final inventoryIds =
-        (data['inventory'] as List?)?.map((e) => e.toString()).toList() ?? [];
-    final equippedIds =
-        (data['equipped'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final inventoryList = data['inventory'] as List?;
+    List<Item> inventoryItems = [];
+    if (inventoryList != null) {
+      for (final element in inventoryList) {
+        if (element is String) {
+          // Old format: List<String>
+          final item = ItemsRepository.get(element);
+          if (item != null) inventoryItems.add(item);
+        } else if (element is Map) {
+          // New format: List<Map>
+          final id = element['id']?.toString();
+          final count = (element['count'] as num?)?.toInt() ?? 1;
+          if (id != null) {
+            final item = ItemsRepository.get(id);
+            if (item != null) {
+              inventoryItems.add(item.copyWith(count: count));
+            }
+          }
+        }
+      }
+    }
+
+    final equippedList = data['equipped'] as List?;
+    List<Item> equippedItems = [];
+    if (equippedList != null) {
+      for (final element in equippedList) {
+        if (element is String) {
+          // Old format
+          final item = ItemsRepository.get(element);
+          if (item != null) equippedItems.add(item);
+        } else if (element is Map) {
+          // New format
+          final id = element['id']?.toString();
+          final count = (element['count'] as num?)?.toInt() ?? 1;
+          if (id != null) {
+            final item = ItemsRepository.get(id);
+            if (item != null) {
+              equippedItems.add(item.copyWith(count: count));
+            }
+          }
+        }
+      }
+    }
 
     // Handle backward compatibility: check for afflictions if buffIds missing
     List<String> buffs = [];
@@ -201,14 +262,8 @@ extension PersistenceLogic on GameState {
       stats: stats,
       xp: (data['xp'] as num?)?.toInt() ?? 0,
       lifespanDays: (data['lifespanDays'] as num?)?.toInt() ?? 80 * 365,
-      inventory: inventoryIds
-          .map((id) => ItemsRepository.get(id))
-          .whereType<Item>()
-          .toList(),
-      equipped: equippedIds
-          .map((id) => ItemsRepository.get(id))
-          .whereType<Item>()
-          .toList(),
+      inventory: inventoryItems,
+      equipped: equippedItems,
       buffIds: buffs,
     );
   }

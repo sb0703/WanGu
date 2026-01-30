@@ -14,6 +14,7 @@ class Player {
     this.level = 1, // 1-10 (显示为 1 到 10 层/圆满)
     required this.stats,
     required this.xp,
+    this.contribution = 0,
     required this.lifespanDays,
     required this.inventory,
     required this.equipped,
@@ -27,6 +28,7 @@ class Player {
   final int level; // 小境界层数: 1..9, 10=大圆满
   final Stats stats; // 基础属性
   final int xp; // 当前修为(经验值)
+  final int contribution; // 宗门贡献
   final int lifespanDays; // 剩余寿元(天)
   final List<Item> inventory; // 背包物品
   final List<Item> equipped; // 已装备物品
@@ -73,6 +75,7 @@ class Player {
     int? level,
     Stats? stats,
     int? xp,
+    int? contribution,
     num? lifespanDays,
     List<Item>? inventory,
     List<Item>? equipped,
@@ -86,6 +89,7 @@ class Player {
       level: level ?? this.level,
       stats: stats ?? this.stats,
       xp: xp ?? this.xp,
+      contribution: contribution ?? this.contribution,
       lifespanDays: (lifespanDays ?? this.lifespanDays).toInt(),
       inventory: inventory ?? this.inventory,
       equipped: equipped ?? this.equipped,
