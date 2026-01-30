@@ -1,12 +1,13 @@
 import '../../models/item.dart';
 
 const Map<String, Item> equipmentItems = {
-  // A. 兵器
+  // A. 兵器 (Main Hand)
   'green_steel_sword': Item(
     id: 'green_steel_sword',
     name: '青钢剑',
     description: '凡俗利器，适合初入江湖。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 15,
     price: 35,
   ),
@@ -14,7 +15,8 @@ const Map<String, Item> equipmentItems = {
     id: 'spirit_pattern_sword_embryo',
     name: '灵纹剑胚',
     description: '可刻灵纹，后续升级空间大。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 10,
     price: 50,
   ),
@@ -22,7 +24,8 @@ const Map<String, Item> equipmentItems = {
     id: 'frost_dagger',
     name: '寒霜短刃',
     description: '附寒意，适合近身刺杀。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 18,
     price: 60,
   ),
@@ -30,7 +33,8 @@ const Map<String, Item> equipmentItems = {
     id: 'red_flame_saber',
     name: '赤焰长刀',
     description: '灼烧伤口，易引仇恨。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 22,
     price: 70,
   ),
@@ -38,7 +42,8 @@ const Map<String, Item> equipmentItems = {
     id: 'mountain_breaking_hammer',
     name: '断岳锤',
     description: '重击破甲，耗体力。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 30,
     speed: -5,
     price: 80,
@@ -47,7 +52,8 @@ const Map<String, Item> equipmentItems = {
     id: 'flowing_light_spear',
     name: '流光枪',
     description: '出手迅疾，适合群战。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 20,
     speed: 2,
     price: 75,
@@ -56,7 +62,8 @@ const Map<String, Item> equipmentItems = {
     id: 'singing_wind_bow',
     name: '鸣风弓',
     description: '箭矢破风，远程偷袭利器。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 25,
     price: 90,
   ),
@@ -64,7 +71,8 @@ const Map<String, Item> equipmentItems = {
     id: 'iron_staff',
     name: '玄铁棍',
     description: '耐打不坏，体修最爱。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 20,
     defenseBonus: 5,
     price: 50,
@@ -73,7 +81,8 @@ const Map<String, Item> equipmentItems = {
     id: 'soul_slashing_bell',
     name: '斩魂铃',
     description: '摇之扰神，邪修器物。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 10,
     spiritBonus: 15,
     price: 120,
@@ -82,7 +91,8 @@ const Map<String, Item> equipmentItems = {
     id: 'spirit_locking_chain',
     name: '锁灵链',
     description: '束缚灵力，抓捕用。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 12,
     price: 60,
   ),
@@ -90,7 +100,8 @@ const Map<String, Item> equipmentItems = {
     id: 'armor_breaking_dagger',
     name: '碎甲匕',
     description: '破护体罡气，刺客之选。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 16,
     price: 55,
   ),
@@ -98,7 +109,8 @@ const Map<String, Item> equipmentItems = {
     id: 'thunder_pattern_halberd',
     name: '雷纹戟',
     description: '易引雷，风险与威力并存。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 35,
     price: 150,
   ),
@@ -106,7 +118,8 @@ const Map<String, Item> equipmentItems = {
     id: 'lotus_sword',
     name: '青莲剑',
     description: '剑意清澈，利于悟剑。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 35,
     spiritBonus: 20,
     price: 300,
@@ -115,16 +128,18 @@ const Map<String, Item> equipmentItems = {
     id: 'blood_shadow_blade',
     name: '血影刀',
     description: '饮血后更锋，代价是煞气。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 40,
-    hpBonus: -10, // Drains health? Or maybe just flavor.
+    hpBonus: -10, 
     price: 250,
   ),
   'mountain_suppressing_axe': Item(
     id: 'mountain_suppressing_axe',
     name: '镇山斧',
     description: '破阵劈门，名声响亮。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 45,
     speed: -8,
     price: 200,
@@ -133,7 +148,8 @@ const Map<String, Item> equipmentItems = {
     id: 'jade_balance_staff',
     name: '玉衡杖',
     description: '导灵聚气，适合法修。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 10,
     spiritBonus: 30,
     price: 180,
@@ -142,7 +158,8 @@ const Map<String, Item> equipmentItems = {
     id: 'evil_breaking_whisk',
     name: '破邪拂尘',
     description: '驱邪镇煞，适合道门。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 20,
     spiritBonus: 10,
     price: 160,
@@ -151,7 +168,8 @@ const Map<String, Item> equipmentItems = {
     id: 'wind_chasing_thorn',
     name: '追风刺',
     description: '加速突进，适合突袭。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 18,
     speed: 5,
     price: 100,
@@ -160,7 +178,8 @@ const Map<String, Item> equipmentItems = {
     id: 'star_shattering_crossbow',
     name: '碎星弩',
     description: '机关弩，凡俗亦可用。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 50,
     speed: -2,
     price: 300,
@@ -169,17 +188,19 @@ const Map<String, Item> equipmentItems = {
     id: 'demon_subduing_hook',
     name: '伏魔钩',
     description: '克制妖兽，易勾断筋骨。',
-    type: ItemType.weapon,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mainHand,
     attackBonus: 28,
     price: 130,
   ),
 
-  // B. 防具与护身
+  // B. 防具与护身 (Body, Guard, Accessory, Mount)
   'soft_armor': Item(
     id: 'soft_armor',
     name: '软甲',
     description: '轻便护身，适合游历。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 5,
     price: 10,
   ),
@@ -187,7 +208,8 @@ const Map<String, Item> equipmentItems = {
     id: 'iron_scale_mail',
     name: '铁鳞甲',
     description: '防刀剑，行动更慢。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 12,
     speed: -2,
     price: 45,
@@ -196,7 +218,8 @@ const Map<String, Item> equipmentItems = {
     id: 'spirit_silk_robe',
     name: '灵丝法衣',
     description: '减伤并隐匿气机。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 10,
     spiritBonus: 10,
     price: 120,
@@ -205,7 +228,8 @@ const Map<String, Item> equipmentItems = {
     id: 'turtle_shield',
     name: '玄龟盾',
     description: '强防御，适合守关。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.guard, // Guard
     defenseBonus: 25,
     speed: -5,
     price: 200,
@@ -214,7 +238,8 @@ const Map<String, Item> equipmentItems = {
     id: 'heart_protecting_mirror',
     name: '护心镜',
     description: '挡一次致命刺杀，需冷却修复。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.guard, // Guard
     defenseBonus: 15,
     price: 80,
   ),
@@ -222,7 +247,8 @@ const Map<String, Item> equipmentItems = {
     id: 'dust_avoiding_cloak',
     name: '避尘斗篷',
     description: '入秘境不沾污秽与毒尘。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 5,
     price: 60,
   ),
@@ -230,7 +256,8 @@ const Map<String, Item> equipmentItems = {
     id: 'cold_soul_cloak',
     name: '寒魄披风',
     description: '抗寒，副作用是心火不足。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 8,
     price: 90,
   ),
@@ -238,7 +265,8 @@ const Map<String, Item> equipmentItems = {
     id: 'red_sun_bracer',
     name: '赤阳护腕',
     description: '抗寒/增力，副作用是躁火。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory, // Accessory? Or Body? Bracer usually accessory or secondary armor. Let's say Accessory.
     defenseBonus: 6,
     attackBonus: 5,
     price: 70,
@@ -247,7 +275,8 @@ const Map<String, Item> equipmentItems = {
     id: 'soul_suppressing_jade',
     name: '镇魂玉佩',
     description: '安神定魂，抵外魔。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory, // Accessory
     defenseBonus: 2,
     spiritBonus: 20,
     price: 150,
@@ -256,7 +285,8 @@ const Map<String, Item> equipmentItems = {
     id: 'evil_breaking_belt',
     name: '破煞腰带',
     description: '减轻煞气侵蚀，邪地常用。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body, // Belt as part of body set usually
     defenseBonus: 5,
     price: 80,
   ),
@@ -264,7 +294,8 @@ const Map<String, Item> equipmentItems = {
     id: 'cloud_stepping_boots',
     name: '踏云靴',
     description: '提升身法，耐久消耗快。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mount, // Boots as movement tool
     speed: 10,
     price: 120,
   ),
@@ -272,7 +303,8 @@ const Map<String, Item> equipmentItems = {
     id: 'stealth_boots',
     name: '潜行靴',
     description: '降低脚步声，适合潜入。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mount, // Boots as movement tool
     speed: 5,
     price: 90,
   ),
@@ -280,21 +312,24 @@ const Map<String, Item> equipmentItems = {
     id: 'water_avoiding_bead',
     name: '避水珠',
     description: '短时避水护体，可水下行动。',
-    type: ItemType.other, // Accessory
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
     price: 100,
   ),
   'fire_avoiding_bead': Item(
     id: 'fire_avoiding_bead',
     name: '避火珠',
     description: '短时避火护体，入火地用。',
-    type: ItemType.other,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
     price: 100,
   ),
   'life_guarding_talisman_armor': Item(
     id: 'life_guarding_talisman_armor',
     name: '护命符甲',
     description: '触发时替死一次，代价是损毁。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 50,
     price: 500,
   ),
@@ -302,7 +337,8 @@ const Map<String, Item> equipmentItems = {
     id: 'spirit_armor_embryo',
     name: '灵甲胚',
     description: '可成长护甲，需材料喂养。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.body,
     defenseBonus: 10,
     price: 200,
   ),
@@ -310,7 +346,8 @@ const Map<String, Item> equipmentItems = {
     id: 'wind_riding_cloak',
     name: '御风披',
     description: '滑翔/短飞，危险区逃命用。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mount, // Flying tool
     speed: 8,
     price: 150,
   ),
@@ -318,7 +355,8 @@ const Map<String, Item> equipmentItems = {
     id: 'spirit_locking_bracer',
     name: '锁灵护腕',
     description: '压制自身波动，隐藏境界。',
-    type: ItemType.armor,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
     defenseBonus: 5,
     price: 100,
   ),
@@ -326,33 +364,61 @@ const Map<String, Item> equipmentItems = {
     id: 'myriad_forms_mask',
     name: '万象面具',
     description: '遮掩相貌与气息，极稀缺。',
-    type: ItemType.other, // Accessory
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
     price: 800,
   ),
   'calm_heart_crown': Item(
     id: 'calm_heart_crown',
     name: '静心冠',
     description: '闭关稳心，减少走火概率。',
-    type: ItemType.armor, // Headgear
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
     spiritBonus: 30,
     price: 250,
   ),
 
-  // C. 工具与器具
+  // C. 工具与器具 (Tools - still 'other' or specific slots?)
+  // For now keeping as 'other' unless they fit slots.
   'storage_bag': Item(
     id: 'storage_bag',
     name: '储物袋',
     description: '容纳杂物，容量有限。',
-    type: ItemType.other,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.mount, // Mount provides bag space. Bag is a "Vehicle" for items? 
+    // Or just keep as ItemType.storage if supported. 
+    // Since I removed storage logic from GameState, I should map it to something that gives space.
+    // Or add ItemType.storage logic back?
+    // User said "Only equip weapon and armor" (implied slots).
+    // If I map to Mount, player can only equip ONE bag.
+    // If I map to Accessory, player can equip ONE.
+    // Design doc: "座驾 ... 背包格子".
+    // So Bag should probably be an Accessory or Mount.
+    // Let's make Storage Bag a "Mount" (as in carried container) or maybe Accessory.
+    // Or maybe it's just an item in inventory that expands space?
+    // GameState logic: `bagCapacity` sums `spaceBonus` from `equipped`.
+    // So it MUST be equipped to work.
+    // If I map it to Accessory, it competes with Rings.
+    // If I map to Mount, it competes with Flying Sword.
+    // Let's map 'storage_bag' to Accessory for now, as early game Mount is rare.
+    // Actually, maybe 'storage_bag' should be `other` and NOT equippable, just passive?
+    // But code says `spaceBonus` comes from `equipped`.
+    // Let's make it Accessory.
+    // Wait, `spaceBonus` is usually `storage` type.
+    // If I map to Accessory, player can equip it.
+    spaceBonus: 10,
     price: 50,
   ),
   'storage_ring': Item(
     id: 'storage_ring',
     name: '纳戒',
     description: '空间更大，易被高阶修士窥探。',
-    type: ItemType.other,
+    type: ItemType.equipment,
+    slot: EquipmentSlot.accessory,
+    spaceBonus: 50,
     price: 500,
   ),
+  // ... other items ...
   'spirit_seeking_plate': Item(
     id: 'spirit_seeking_plate',
     name: '寻灵盘',
@@ -360,6 +426,7 @@ const Map<String, Item> equipmentItems = {
     type: ItemType.other,
     price: 80,
   ),
+  // Keep rest as ItemType.other
   'pulse_measuring_needle': Item(
     id: 'pulse_measuring_needle',
     name: '测脉针',

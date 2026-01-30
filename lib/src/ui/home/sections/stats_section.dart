@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../models/buff.dart';
+import '../../../models/item.dart';
 import '../../../models/player.dart';
 import '../../../state/game_state.dart';
 import '../widgets/stat_cards.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class StatsSection extends StatelessWidget {
   const StatsSection({super.key});
@@ -20,10 +21,196 @@ class StatsSection extends StatelessWidget {
         children: [
           _CharacterStatusCard(player: player, game: game),
           const SizedBox(height: 24),
+          _EquipmentGrid(player: player),
+          const SizedBox(height: 24),
           StatCards(player: player),
         ],
       ),
     );
+  }
+}
+
+class _EquipmentGrid extends StatelessWidget {
+  const _EquipmentGrid({required this.player});
+
+  final Player player;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Helper to find item
+    Item? getItem(EquipmentSlot slot) {
+      for (final item in player.equipped) {
+        if (item.type == ItemType.equipment && item.slot == slot) return item;
+      }
+      return null;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.shield_moon, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              '装备',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.8,
+          children: [
+            _EquipSlot(
+              slot: EquipmentSlot.soulbound,
+              label: '本命',
+              item: getItem(EquipmentSlot.soulbound),
+            ),
+            _EquipSlot(
+              slot: EquipmentSlot.mainHand,
+              label: '主手',
+              item: getItem(EquipmentSlot.mainHand),
+            ),
+            _EquipSlot(
+              slot: EquipmentSlot.body,
+              label: '身甲',
+              item: getItem(EquipmentSlot.body),
+            ),
+            _EquipSlot(
+              slot: EquipmentSlot.accessory,
+              label: '饰品',
+              item: getItem(EquipmentSlot.accessory),
+            ),
+            _EquipSlot(
+              slot: EquipmentSlot.guard,
+              label: '护身',
+              item: getItem(EquipmentSlot.guard),
+            ),
+            _EquipSlot(
+              slot: EquipmentSlot.mount,
+              label: '座驾',
+              item: getItem(EquipmentSlot.mount),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EquipSlot extends StatelessWidget {
+  const _EquipSlot({required this.slot, required this.label, this.item});
+
+  final EquipmentSlot slot;
+  final String label;
+  final Item? item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isEquipped = item != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isEquipped
+              ? _getRarityColor(item!.rarity)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          width: isEquipped ? 2 : 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.secondary,
+            ),
+          ),
+          const Spacer(),
+          if (isEquipped) ...[
+            Icon(
+              _getSlotIcon(slot),
+              color: _getRarityColor(item!.rarity),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item!.name,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ] else ...[
+            Icon(
+              _getSlotIcon(slot),
+              color: theme.disabledColor.withValues(alpha: 0.2),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '空',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.disabledColor,
+              ),
+            ),
+          ],
+          const Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Color _getRarityColor(ItemRarity rarity) {
+    switch (rarity) {
+      case ItemRarity.common:
+        return Colors.grey;
+      case ItemRarity.uncommon:
+        return Colors.green;
+      case ItemRarity.rare:
+        return Colors.blue;
+      case ItemRarity.epic:
+        return Colors.purple;
+      case ItemRarity.legendary:
+        return Colors.amber;
+      case ItemRarity.mythic:
+        return Colors.red;
+    }
+  }
+
+  IconData _getSlotIcon(EquipmentSlot slot) {
+    switch (slot) {
+      case EquipmentSlot.soulbound:
+        return Icons.auto_awesome;
+      case EquipmentSlot.mainHand:
+        return Icons.hardware;
+      case EquipmentSlot.body:
+        return Icons.shield;
+      case EquipmentSlot.accessory:
+        return Icons.diamond;
+      case EquipmentSlot.guard:
+        return Icons.security;
+      case EquipmentSlot.mount:
+        return FontAwesomeIcons.horse;
+    }
   }
 }
 
@@ -200,142 +387,45 @@ class _CharacterStatusCard extends StatelessWidget {
                             purity: player.effectiveStats.purity,
                             theme: theme,
                           ),
-                          if (activeBuffs.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 4,
-                              runSpacing: 4,
-                              children: activeBuffs.map((buff) {
-                                return _BuffChip(buff: buff);
-                              }).toList(),
-                            ),
-                          ],
                         ],
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 16),
-
-                // 装备栏
-                Row(
-                  children: [
-                    Expanded(
-                      child: _EquipmentItem(
-                        label: '武器',
-                        name: game.equippedWeapon?.name ?? '暂无装备',
-                        icon: Icons.hardware, // Better sword icon alternative
-                        isEquipped: game.equippedWeapon != null,
-                      ),
+                // Buffs Display
+                if (activeBuffs.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 32,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: activeBuffs.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final buff = activeBuffs[index];
+                        return Tooltip(
+                          message: '${buff.name}: ${buff.description}',
+                          child: Chip(
+                            label: Text(
+                              buff.name,
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            backgroundColor: buff.isDebuff
+                                ? Colors.red.withValues(alpha: 0.1)
+                                : Colors.green.withValues(alpha: 0.1),
+                            side: BorderSide.none,
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _EquipmentItem(
-                        label: '护甲',
-                        name: game.equippedArmor?.name ?? '暂无装备',
-                        icon: Icons.shield,
-                        isEquipped: game.equippedArmor != null,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusRow extends StatelessWidget {
-  const _StatusRow({
-    required this.icon,
-    required this.label,
-    required this.theme,
-  });
-
-  final IconData icon;
-  final String label;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: theme.colorScheme.secondary),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EquipmentItem extends StatelessWidget {
-  const _EquipmentItem({
-    required this.label,
-    required this.name,
-    required this.icon,
-    required this.isEquipped,
-  });
-
-  final String label;
-  final String name;
-  final IconData icon;
-  final bool isEquipped;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: isEquipped ? theme.colorScheme.primary : theme.disabledColor,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.secondary,
                   ),
-                ),
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: isEquipped
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: isEquipped
-                        ? theme.colorScheme.onSurface
-                        : theme.disabledColor,
-                  ),
-                ),
+                ],
               ],
             ),
           ),
@@ -359,22 +449,24 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         shape: BoxShape.circle,
-        border: Border.all(color: theme.colorScheme.primary, width: 3),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.2),
-            blurRadius: 12,
-            spreadRadius: 2,
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Center(
         child: Text(
-          stageName.characters.first,
+          stageName.characters.take(1).toString(),
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Serif',
+            color: theme.colorScheme.primary,
           ),
         ),
       ),
@@ -382,119 +474,30 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-class _BuffChip extends StatelessWidget {
-  const _BuffChip({required this.buff});
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.icon,
+    required this.label,
+    required this.theme,
+  });
 
-  final Buff buff;
+  final IconData icon;
+  final String label;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final color = _getColor(buff.type);
-    final icon = _getIcon(buff.type);
-
-    return InkWell(
-      onTap: () => _showBuffDetails(context),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 4),
-            Text(
-              buff.name,
-              style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getColor(BuffType type) {
-    switch (type) {
-      case BuffType.positive:
-        return Colors.green[700]!;
-      case BuffType.negative:
-        return Colors.red[800]!;
-      case BuffType.mixed:
-        return Colors.purple[800]!;
-    }
-  }
-
-  IconData _getIcon(BuffType type) {
-    switch (type) {
-      case BuffType.positive:
-        return Icons.arrow_upward;
-      case BuffType.negative:
-        return Icons.arrow_downward;
-      case BuffType.mixed:
-        return Icons.shuffle;
-    }
-  }
-
-  void _showBuffDetails(BuildContext context) {
-    final color = _getColor(buff.type);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(_getIcon(buff.type), color: color),
-            const SizedBox(width: 8),
-            Text(buff.name, style: TextStyle(color: color)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(buff.description),
-            const SizedBox(height: 12),
-            const Text('属性影响:', style: TextStyle(fontWeight: FontWeight.bold)),
-            if (buff.statModifiers.maxHp != 0)
-              Text(
-                '气血上限: ${buff.statModifiers.maxHp > 0 ? '+' : ''}${buff.statModifiers.maxHp}',
-              ),
-            if (buff.statModifiers.attack != 0)
-              Text(
-                '攻击: ${buff.statModifiers.attack > 0 ? '+' : ''}${buff.statModifiers.attack}',
-              ),
-            if (buff.statModifiers.defense != 0)
-              Text(
-                '防御: ${buff.statModifiers.defense > 0 ? '+' : ''}${buff.statModifiers.defense}',
-              ),
-            if (buff.statModifiers.speed != 0)
-              Text(
-                '速度: ${buff.statModifiers.speed > 0 ? '+' : ''}${buff.statModifiers.speed}',
-              ),
-            if (buff.statModifiers.insight != 0)
-              Text(
-                '悟性: ${buff.statModifiers.insight > 0 ? '+' : ''}${buff.statModifiers.insight}',
-              ),
-            if (buff.statModifiers.purity != 0)
-              Text(
-                '纯度: ${buff.statModifiers.purity > 0 ? '+' : ''}${buff.statModifiers.purity}',
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

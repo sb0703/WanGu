@@ -30,4 +30,6 @@ class Buff {
       purity: 0,
     ),
   });
+
+  bool get isDebuff => type == BuffType.negative;
 }

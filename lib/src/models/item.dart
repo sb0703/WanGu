@@ -1,6 +1,22 @@
-enum ItemType { weapon, armor, consumable, storage, other }
+enum ItemType { equipment, consumable, storage, other }
 
-enum EquipmentSlot { weapon, armor, back, waist, hand, accessory }
+enum EquipmentSlot {
+  soulbound, // 本命
+  mainHand, // 主手
+  body, // 身甲
+  accessory, // 饰品
+  guard, // 护身
+  mount, // 座驾
+}
+
+enum ElementType {
+  none,
+  metal, // 金
+  wood, // 木
+  water, // 水
+  fire, // 火
+  earth, // 土
+}
 
 enum ItemRarity {
   common, // 凡 (Gray)
@@ -19,6 +35,7 @@ class Item {
     required this.type,
     this.rarity = ItemRarity.common,
     this.slot,
+    this.element = ElementType.none,
     this.attackBonus = 0,
     this.defenseBonus = 0,
     this.hpBonus = 0,
@@ -35,6 +52,7 @@ class Item {
   final ItemType type;
   final ItemRarity rarity;
   final EquipmentSlot? slot;
+  final ElementType element;
   final int attackBonus;
   final int defenseBonus;
   final int hpBonus;

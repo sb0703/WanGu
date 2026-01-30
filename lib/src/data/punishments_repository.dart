@@ -139,9 +139,12 @@ class PunishmentsRepository {
          }
        } else if (mediumRoll == 2) {
          // Artifact Rebellion (Unequip Weapon)
-         final weapon = player.equipped.firstWhere((e) => e.type == ItemType.weapon, orElse: () => Item(id: 'none', name: 'None', type: ItemType.other, description: ''));
+         final weapon = player.equipped.firstWhere(
+           (e) => e.type == ItemType.equipment && e.slot == EquipmentSlot.mainHand,
+           orElse: () => Item(id: 'none', name: 'None', type: ItemType.other, description: ''),
+         );
          if (weapon.id != 'none') {
-             final newEquipped = player.equipped.where((e) => e.type != ItemType.weapon).toList();
+             final newEquipped = player.equipped.where((e) => e != weapon).toList();
              final newInventory = [...player.inventory, weapon]; // Return to inventory
              newPlayer = player.copyWith(
                 equipped: newEquipped,

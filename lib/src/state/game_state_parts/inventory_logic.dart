@@ -27,34 +27,9 @@ extension InventoryLogic on GameState {
 
     Item? unequippedItem;
 
-    if (item.type == ItemType.weapon) {
-      // Unequip current weapon
-      final current = _firstEquipped(ItemType.weapon);
+    if (item.type == ItemType.equipment && item.slot != null) {
+      final current = _getEquippedInSlot(item.slot!);
       if (current != null) {
-        newEquipped.remove(current);
-        unequippedItem = current;
-      }
-    } else if (item.type == ItemType.armor) {
-      // Unequip current armor
-      final current = _firstEquipped(ItemType.armor);
-      if (current != null) {
-        newEquipped.remove(current);
-        unequippedItem = current;
-      }
-    } else if (item.type == ItemType.storage && item.slot != null) {
-      // Storage item logic based on slot
-      // Check if slot is occupied
-      final current = newEquipped.firstWhere(
-        (e) => e.type == ItemType.storage && e.slot == item.slot,
-        orElse: () => const Item(
-          id: 'none',
-          name: '',
-          description: '',
-          type: ItemType.other,
-        ),
-      );
-
-      if (current.id != 'none') {
         newEquipped.remove(current);
         unequippedItem = current;
       }

@@ -159,19 +159,25 @@ class GameState extends ChangeNotifier {
   int get bagCapacity {
     int bonus = 0;
     for (final item in _player.equipped) {
-      if (item.type == ItemType.storage) {
-        bonus += item.spaceBonus;
-      }
+      bonus += item.spaceBonus;
     }
     return _baseBagCapacity + bonus;
   }
 
-  Item? get equippedWeapon => _firstEquipped(ItemType.weapon);
-  Item? get equippedArmor => _firstEquipped(ItemType.armor);
+  Item? get equippedSoulbound => _getEquippedInSlot(EquipmentSlot.soulbound);
+  Item? get equippedMainHand => _getEquippedInSlot(EquipmentSlot.mainHand);
+  Item? get equippedBody => _getEquippedInSlot(EquipmentSlot.body);
+  Item? get equippedAccessory => _getEquippedInSlot(EquipmentSlot.accessory);
+  Item? get equippedGuard => _getEquippedInSlot(EquipmentSlot.guard);
+  Item? get equippedMount => _getEquippedInSlot(EquipmentSlot.mount);
 
-  Item? _firstEquipped(ItemType type) {
+  // Legacy getters for compatibility if needed, or remove them
+  Item? get equippedWeapon => equippedMainHand;
+  Item? get equippedArmor => equippedBody;
+
+  Item? _getEquippedInSlot(EquipmentSlot slot) {
     for (final item in _player.equipped) {
-      if (item.type == type) return item;
+      if (item.type == ItemType.equipment && item.slot == slot) return item;
     }
     return null;
   }

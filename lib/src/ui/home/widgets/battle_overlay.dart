@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
+import '../../../models/battle.dart';
 import '../../../state/game_state.dart';
 
 class BattleOverlay extends StatelessWidget {
@@ -329,8 +330,8 @@ class _StatBar extends StatelessWidget {
 }
 
 class _BattleControls extends StatelessWidget {
-  final dynamic game; // Avoid heavy typing for brevity, ideally GameState
-  final dynamic battle;
+  final GameState game;
+  final Battle battle;
 
   const _BattleControls({required this.game, required this.battle});
 
