@@ -20,6 +20,7 @@ import '../models/player.dart';
 import '../models/realm_stage.dart';
 import '../models/stats.dart';
 import '../models/world_clock.dart';
+import '../utils/element_logic.dart';
 
 part 'game_state_parts/inventory_logic.dart';
 part 'game_state_parts/battle_logic.dart';
@@ -301,8 +302,8 @@ class GameState extends ChangeNotifier {
             ),
           );
           _breakthroughMessage =
-              '天道酬勤，突破大境界！\n晋升 ${next.name}！\n气血+${next.hpBonus} 攻击+${next.attackBonus}';
-          _log('突破成功，晋升 ${next.name}！');
+              '天道酬勤，突破大境界！\n晋升 ${next.getName(_player.race)}！\n气血+${next.hpBonus} 攻击+${next.attackBonus}';
+          _log('突破成功，晋升 ${next.getName(_player.race)}！');
         } else {
           _breakthroughMessage = '已至世界巅峰，无法再进！';
         }

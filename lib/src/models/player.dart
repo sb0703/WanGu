@@ -9,6 +9,7 @@ class Player {
   const Player({
     required this.name,
     this.gender = '男', // 默认性别
+    this.race = Race.human, // 默认种族
     required this.stageIndex,
     this.level = 1, // 1-10 (显示为 1 到 10 层/圆满)
     required this.stats,
@@ -21,6 +22,7 @@ class Player {
 
   final String name; // 姓名
   final String gender; // 性别
+  final Race race; // 种族
   final int stageIndex; // 境界索引 (如: 0=练气, 1=筑基)
   final int level; // 小境界层数: 1..9, 10=大圆满
   final Stats stats; // 基础属性
@@ -56,15 +58,17 @@ class Player {
 
   /// 获取境界文本描述 (如: 练气三层)
   String get realmLabel {
-    if (level >= 10) return '${realm.name}大圆满';
+    final realmName = realm.getName(race);
+    if (level >= 10) return '$realmName大圆满';
     const cnNumbers = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
     final levelStr = level <= 10 ? cnNumbers[level - 1] : '$level';
-    return '${realm.name}$levelStr层';
+    return '$realmName$levelStr层';
   }
 
   Player copyWith({
     String? name,
     String? gender,
+    Race? race,
     int? stageIndex,
     int? level,
     Stats? stats,
@@ -77,6 +81,7 @@ class Player {
     return Player(
       name: name ?? this.name,
       gender: gender ?? this.gender,
+      race: race ?? this.race,
       stageIndex: stageIndex ?? this.stageIndex,
       level: level ?? this.level,
       stats: stats ?? this.stats,

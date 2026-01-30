@@ -333,7 +333,7 @@ class _CharacterStatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 头像区域
-                    _Avatar(stageName: realm.name),
+                    _Avatar(stageName: realm.getName(player.race)),
                     const SizedBox(width: 20),
 
                     // 核心信息

@@ -1,3 +1,4 @@
+import 'item.dart';
 import 'stats.dart';
 
 /// 敌人模型
@@ -10,6 +11,7 @@ class Enemy {
     required this.stats,
     required this.loot,
     this.xpReward = 12,
+    this.element = ElementType.none,
   });
 
   final String id; // ID
@@ -19,4 +21,5 @@ class Enemy {
   final Stats stats; // 属性
   final List<String> loot; // 掉落物品ID列表
   final int xpReward; // 击败获得的修为奖励
+  final ElementType element; // 五行属性
 }

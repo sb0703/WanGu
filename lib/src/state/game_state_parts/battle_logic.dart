@@ -3,6 +3,46 @@ part of '../game_state.dart';
 extension BattleLogic on GameState {
   Battle? get currentBattle => _currentBattle;
 
+  /// Get player's offensive element (MainHand > Soulbound > None)
+  ElementType _getPlayerAttackElement() {
+    for (final item in _player.equipped) {
+      if (item.slot == EquipmentSlot.mainHand) return item.element;
+    }
+    for (final item in _player.equipped) {
+      if (item.slot == EquipmentSlot.soulbound) return item.element;
+    }
+    return ElementType.none;
+  }
+
+  /// Get player's defensive element (Body > Guard > None)
+  ElementType _getPlayerDefenseElement() {
+    for (final item in _player.equipped) {
+      if (item.slot == EquipmentSlot.body) return item.element;
+    }
+    for (final item in _player.equipped) {
+      if (item.slot == EquipmentSlot.guard) return item.element;
+    }
+    return ElementType.none;
+  }
+
+  /// Get currently equipped weapon skill
+  Item? getWeaponWithSkill() {
+    for (final item in _player.equipped) {
+      if ((item.slot == EquipmentSlot.mainHand || item.slot == EquipmentSlot.soulbound) && 
+          item.skillName != null) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  /// Calculate damage with element modifier
+  int _calculateElementDamage(double baseDmg, ElementType atkType, ElementType defType) {
+    final multiplier = ElementLogic.getMultiplier(atkType, defType);
+    return max(1, (baseDmg * multiplier).round());
+  }
+
+  /// Player Basic Attack
   void progressBattle() {
     if (_currentBattle == null || _currentBattle!.isOver) return;
 
@@ -10,36 +50,49 @@ extension BattleLogic on GameState {
     final enemy = battle.enemy;
 
     // Player Turn
-    // Simple logic for now: Attack
-    // Calculate stats (Use effective stats for battle)
-    final playerAtkBase = (_player.effectiveStats.attack + _itemAttackBonus())
-        .toDouble();
+    final playerAtkBase = (_player.effectiveStats.attack + _itemAttackBonus()).toDouble();
     final enemyDef = enemy.stats.defense.toDouble();
     final playerSpeed = _player.effectiveStats.speed + _itemSpeedBonus();
     final enemySpeed = enemy.stats.speed;
 
-    // Spirit Usage
-    final hasSpirit = battle.playerSpirit >= 2;
-    final isCrit =
-        _rng.nextDouble() < (0.05 + (playerSpeed > enemySpeed ? 0.1 : 0.0));
+    // Element Logic
+    final playerElement = _getPlayerAttackElement();
+    final enemyElement = enemy.element;
+
+    // Spirit Usage for Attack (Enhance attack if enough spirit)
+    final hasSpirit = battle.playerSpirit >= 1;
+    final isCrit = _rng.nextDouble() < (0.05 + (playerSpeed > enemySpeed ? 0.1 : 0.0));
     final critMultiplier = isCrit ? 1.5 : 1.0;
 
-    double atkThisRound = hasSpirit ? playerAtkBase : playerAtkBase * 0.8;
+    double atkThisRound = hasSpirit ? playerAtkBase : playerAtkBase * 0.9;
     if (hasSpirit) {
-      battle.playerSpirit -= 2;
+      battle.playerSpirit -= 1; // Basic attack consumes 1 spirit for full power
     }
 
     // Variance
     atkThisRound *= (0.9 + _rng.nextDouble() * 0.2);
+    
+    // Raw Damage before element
     final rawDmg = (atkThisRound * critMultiplier) - enemyDef;
-    final dmgToEnemy = max(1, rawDmg.round());
+    
+    // Apply Element
+    final finalDmg = _calculateElementDamage(max(1.0, rawDmg), playerElement, enemyElement);
+    
+    // Log details
+    String logMsg = '你对 ${enemy.name} 造成了$finalDmg 点伤害';
+    if (playerElement != ElementType.none) {
+      final multiplier = ElementLogic.getMultiplier(playerElement, enemyElement);
+      if (multiplier > 1.0) logMsg += ' (克制)';
+      if (multiplier < 1.0) logMsg += ' (被克)';
+    }
+    logMsg += '！';
 
-    battle.enemyHp -= dmgToEnemy;
+    battle.enemyHp -= finalDmg;
     battle.logs.add(
       BattleLog(
-        '你对 ${enemy.name} 造成了$dmgToEnemy 点伤害！',
+        logMsg,
         isPlayerAction: true,
-        damage: dmgToEnemy,
+        damage: finalDmg,
         isCrit: isCrit,
       ),
     );
@@ -54,7 +107,77 @@ extension BattleLogic on GameState {
 
     // Enemy Turn
     _resolveEnemyTurn(battle);
+    notify();
+  }
 
+  /// Player Cast Spell (Weapon Skill)
+  void playerCastSpell() {
+    if (_currentBattle == null || _currentBattle!.isOver) return;
+    
+    final battle = _currentBattle!;
+    final weapon = getWeaponWithSkill();
+    
+    if (weapon == null) {
+      battle.logs.add(BattleLog('你没有装备带有术法的法宝！', isPlayerAction: true));
+      notify();
+      return;
+    }
+
+    if (battle.playerSpirit < weapon.skillCost) {
+      battle.logs.add(BattleLog('灵力不足，无法施展${weapon.skillName}！', isPlayerAction: true));
+      notify();
+      return;
+    }
+
+    // Consume Spirit
+    battle.playerSpirit -= weapon.skillCost;
+
+    final enemy = battle.enemy;
+    final playerAtkBase = (_player.effectiveStats.attack + _itemAttackBonus()).toDouble();
+    final enemyDef = enemy.stats.defense.toDouble();
+    
+    // Spell calculation
+    final spellMultiplier = weapon.skillDamageMultiplier;
+    double spellDmgBase = playerAtkBase * spellMultiplier;
+    
+    // Variance
+    spellDmgBase *= (0.9 + _rng.nextDouble() * 0.2);
+    
+    // Element (Spell usually inherits weapon element)
+    final playerElement = weapon.element;
+    final enemyElement = enemy.element;
+    
+    final rawDmg = spellDmgBase - (enemyDef * 0.8); // Spells penetrate some defense
+    final finalDmg = _calculateElementDamage(max(1.0, rawDmg), playerElement, enemyElement);
+
+    // Log
+    String logMsg = '你施展【${weapon.skillName}】，对 ${enemy.name} 造成了$finalDmg 点伤害';
+    if (playerElement != ElementType.none) {
+      final multiplier = ElementLogic.getMultiplier(playerElement, enemyElement);
+      if (multiplier > 1.0) logMsg += ' (五行克制)';
+    }
+    logMsg += '！';
+
+    battle.enemyHp -= finalDmg;
+    battle.logs.add(
+      BattleLog(
+        logMsg,
+        isPlayerAction: true,
+        damage: finalDmg,
+        isCrit: true, // Spells count as crit visually
+      ),
+    );
+
+    if (battle.enemyHp <= 0) {
+      battle.enemyHp = 0;
+      battle.state = BattleState.victory;
+      _resolveBattleVictory(battle);
+      notify();
+      return;
+    }
+
+    // Enemy Turn
+    _resolveEnemyTurn(battle);
     notify();
   }
 
@@ -97,22 +220,25 @@ extension BattleLogic on GameState {
     final enemy = battle.enemy;
     final enemyAtk = enemy.stats.attack.toDouble();
     // Use effective defense
-    final playerDef = (_player.effectiveStats.defense + _itemDefenseBonus())
-        .toDouble();
+    final playerDef = (_player.effectiveStats.defense + _itemDefenseBonus()).toDouble();
+
+    // Element Interaction
+    final enemyElement = enemy.element;
+    final playerElement = _getPlayerDefenseElement();
 
     double enemyAtkThisRound = enemyAtk * (0.9 + _rng.nextDouble() * 0.2);
     final enemyIsCrit = _rng.nextDouble() < 0.05;
     if (enemyIsCrit) enemyAtkThisRound *= 1.5;
 
     final rawDmgToPlayer = enemyAtkThisRound - playerDef;
-    final dmgToPlayer = max(1, rawDmgToPlayer.round());
+    final finalDmg = _calculateElementDamage(max(1.0, rawDmgToPlayer), enemyElement, playerElement);
 
-    battle.playerHp -= dmgToPlayer;
+    battle.playerHp -= finalDmg;
     battle.logs.add(
       BattleLog(
-        '${enemy.name} 对你造成了$dmgToPlayer 点伤害！',
+        '${enemy.name} 对你造成了$finalDmg 点伤害！',
         isPlayerAction: false,
-        damage: dmgToPlayer,
+        damage: finalDmg,
         isCrit: enemyIsCrit,
       ),
     );
@@ -238,6 +364,7 @@ extension BattleLogic on GameState {
       stats: npc.stats,
       loot: [], // Or specific loot
       xpReward: npc.stats.attack * 2, // Simple logic
+      element: ElementType.none, // NPC default element
     );
 
     _log('你突然对 ${npc.name} 发起了攻击！');

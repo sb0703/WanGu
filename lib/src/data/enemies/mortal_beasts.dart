@@ -1,6 +1,7 @@
 import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
+import '../../models/item.dart';
 
 const List<Enemy> mortalBeasts = [
   Enemy(
@@ -25,6 +26,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 10,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'red_eye_wolf',
@@ -47,6 +49,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 12,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'black_mastiff',
@@ -69,6 +72,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 15,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'mandrill',
@@ -91,6 +95,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 14,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'poison_snake',
@@ -108,6 +113,7 @@ const List<Enemy> mortalBeasts = [
     ),
     loot: ['snake_gall', 'poison_sac', ...DropTables.commonHerbs],
     xpReward: 16,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'iron_beak_crow',
@@ -125,6 +131,7 @@ const List<Enemy> mortalBeasts = [
     ),
     loot: ['crow_beak', 'feather', ...DropTables.commonMonsterParts],
     xpReward: 13,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'swamp_crocodile',
@@ -146,6 +153,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.commonMonsterParts,
     ],
     xpReward: 20,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'wind_tail_fox',
@@ -168,6 +176,7 @@ const List<Enemy> mortalBeasts = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 18,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'blood_mosquito',
@@ -185,6 +194,7 @@ const List<Enemy> mortalBeasts = [
     ),
     loot: ['blood_sac', ...DropTables.lowLevelConsumables],
     xpReward: 8,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'rock_lizard',
@@ -200,12 +210,9 @@ const List<Enemy> mortalBeasts = [
       insight: 1,
       purity: 0,
     ),
-    loot: [
-      'lizard_core',
-      'rock_scale',
-      ...DropTables.commonHerbs,
-    ], // Assuming commonOres doesn't exist, use parts
+    loot: ['lizard_core', 'rock_scale', ...DropTables.commonHerbs],
     xpReward: 14,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'hyena',
@@ -223,5 +230,6 @@ const List<Enemy> mortalBeasts = [
     ),
     loot: ['wolf_fang', 'monster_leather', ...DropTables.commonMonsterParts],
     xpReward: 13,
+    element: ElementType.earth,
   ),
 ];

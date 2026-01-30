@@ -1,6 +1,7 @@
 import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
+import '../../models/item.dart';
 
 const List<Enemy> bosses = [
   // Secret Realm Guards (101-110)
@@ -12,6 +13,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 800, hp: 800, attack: 50, defense: 80, speed: 5, insight: 0, purity: 0),
     loot: ['stone_heart', 'inscription_fragment', ...DropTables.epicMonsterParts, ...DropTables.highLevelConsumables],
     xpReward: 150,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'bronze_soldier',
@@ -21,6 +23,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 600, hp: 600, attack: 45, defense: 60, speed: 10, insight: 5, purity: 0),
     loot: ['copper_core', 'array_flag_four_symbols', ...DropTables.epicMonsterParts, ...DropTables.midLevelConsumables],
     xpReward: 140,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'rune_trap',
@@ -30,6 +33,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 300, hp: 300, attack: 80, defense: 20, speed: 30, insight: 0, purity: 0),
     loot: ['talisman_fragment', 'trap_blueprint', ...DropTables.rareMonsterParts],
     xpReward: 100,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'furnace_spirit',
@@ -39,6 +43,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 700, hp: 700, attack: 70, defense: 40, speed: 15, insight: 10, purity: 50),
     loot: ['furnace_core', 'red_flame_crystal', ...DropTables.epicHerbs, ...DropTables.highLevelConsumables],
     xpReward: 160,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'mirror_maze_spirit',
@@ -48,6 +53,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 500, hp: 500, attack: 40, defense: 20, speed: 35, insight: 20, purity: 10),
     loot: ['mirror_sand', 'map_fragment', ...DropTables.midLevelConsumables, ...DropTables.rareHerbs],
     xpReward: 145,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'spring_guardian',
@@ -57,6 +63,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 1000, hp: 1000, attack: 30, defense: 50, speed: 12, insight: 25, purity: 100),
     loot: ['spring_core', 'spirit_liquid', ...DropTables.epicHerbs, ...DropTables.highLevelConsumables],
     xpReward: 180,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'wind_blade_spirit',
@@ -66,6 +73,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 400, hp: 400, attack: 90, defense: 10, speed: 40, insight: 0, purity: 20),
     loot: ['wind_core', 'inscription_fragment', ...DropTables.midLevelConsumables],
     xpReward: 155,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'thunder_pillar_spirit',
@@ -75,6 +83,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 900, hp: 900, attack: 100, defense: 40, speed: 25, insight: 10, purity: 30),
     loot: ['thunder_sand', 'thunder_key', ...DropTables.epicMonsterParts, ...DropTables.advancedEquipment],
     xpReward: 200,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'shadow_curtain_keeper',
@@ -84,6 +93,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 600, hp: 600, attack: 60, defense: 30, speed: 50, insight: 30, purity: 0),
     loot: ['shadow_dust', 'treasure_clue', ...DropTables.specialEquipment, ...DropTables.highLevelConsumables],
     xpReward: 190,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'sealed_beast',
@@ -93,6 +103,7 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 2000, hp: 2000, attack: 120, defense: 100, speed: 5, insight: 0, purity: -100),
     loot: ['broken_chain', 'seal_rune', ...DropTables.epicMonsterParts, ...DropTables.specialEquipment],
     xpReward: 300,
+    element: ElementType.earth,
   ),
 
   // Disasters / Anomalies (111-120)
@@ -105,5 +116,6 @@ const List<Enemy> bosses = [
     stats: Stats(maxHp: 5000, hp: 5000, attack: 200, defense: 0, speed: 100, insight: 0, purity: 0),
     loot: ['spirit_stone', 'spirit_essence', ...DropTables.highLevelConsumables],
     xpReward: 0,
+    element: ElementType.water,
   ),
 ];

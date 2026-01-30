@@ -16,7 +16,7 @@ extension InventoryLogic on GameState {
 
     // Level Requirement Check
     if (_player.level < item.levelReq) {
-      _log('境界未稳，无法驾驭此宝（需Lv.${item.levelReq}）');
+      _log('境界未稳，无法驾驭此宝（需 ${item.levelReq}）');
       return;
     }
 

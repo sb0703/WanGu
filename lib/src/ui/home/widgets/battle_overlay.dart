@@ -3,7 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/battle.dart';
+import '../../../models/item.dart';
 import '../../../state/game_state.dart';
+import '../../../utils/element_logic.dart';
 
 class BattleOverlay extends StatelessWidget {
   const BattleOverlay({super.key});
@@ -15,6 +17,15 @@ class BattleOverlay extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (battle == null) return const SizedBox.shrink();
+
+    // Determine Player Element (MainHand)
+    ElementType playerElement = ElementType.none;
+    for (final item in game.player.equipped) {
+      if (item.slot == EquipmentSlot.mainHand) {
+        playerElement = item.element;
+        break;
+      }
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -51,6 +62,7 @@ class BattleOverlay extends StatelessWidget {
                     maxHp: battle.enemyMaxHp,
                     isPlayer: false,
                     icon: Icons.bug_report,
+                    element: battle.enemy.element,
                   ),
 
                   const SizedBox(height: 48), // Spacing between combatants
@@ -63,6 +75,7 @@ class BattleOverlay extends StatelessWidget {
                     maxSpirit: battle.playerMaxSpirit,
                     isPlayer: true,
                     icon: Icons.person,
+                    element: playerElement,
                   ),
                 ],
               ),
@@ -126,6 +139,7 @@ class _CombatUnit extends StatelessWidget {
   final int? maxSpirit;
   final bool isPlayer;
   final IconData icon;
+  final ElementType? element;
 
   const _CombatUnit({
     required this.name,
@@ -135,6 +149,7 @@ class _CombatUnit extends StatelessWidget {
     this.maxSpirit,
     required this.isPlayer,
     required this.icon,
+    this.element,
   });
 
   @override
@@ -163,19 +178,48 @@ class _CombatUnit extends StatelessWidget {
                 ? CrossAxisAlignment.end
                 : CrossAxisAlignment.start,
             children: [
-              Text(
-                name,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    const Shadow(
-                      blurRadius: 4,
-                      color: Colors.black,
-                      offset: Offset(0, 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        const Shadow(
+                          blurRadius: 4,
+                          color: Colors.black,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (element != null && element != ElementType.none) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ElementLogic.getColor(element!),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        ElementLogic.getName(element!),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
-                ),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -436,7 +480,30 @@ class _BattleControls extends StatelessWidget {
                     onTap: () => game.progressBattle(),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final weapon = game.getWeaponWithSkill();
+                      final hasSkill = weapon != null;
+                      final skillName = weapon?.skillName ?? '术法';
+                      final cost = weapon?.skillCost ?? 0;
+                      final canCast = hasSkill && battle.playerSpirit >= cost;
+
+                      return _ActionButton(
+                        label: hasSkill ? skillName : '无术法',
+                        subLabel: hasSkill ? '灵力: $cost' : null,
+                        icon: Icons.auto_fix_high,
+                        color: const Color(0xFF9C27B0), // Purple
+                        isDisabled: !canCast,
+                        onTap: () {
+                          if (canCast) game.playerCastSpell();
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _ActionButton(
                     label: '逃跑',
@@ -456,46 +523,72 @@ class _BattleControls extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   final String label;
+  final String? subLabel;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
   final bool isOutlined;
+  final bool isDisabled;
 
   const _ActionButton({
     required this.label,
+    this.subLabel,
     required this.icon,
     required this.color,
     required this.onTap,
     this.isOutlined = false,
+    this.isDisabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = isDisabled ? Colors.grey : color;
+
     return Material(
-      color: isOutlined ? Colors.transparent : color,
+      color: isOutlined ? Colors.transparent : effectiveColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isOutlined ? BorderSide(color: color) : BorderSide.none,
+        side: isOutlined ? BorderSide(color: effectiveColor) : BorderSide.none,
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: isDisabled ? null : onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
-          child: Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isOutlined ? color : Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isOutlined ? color : Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: isOutlined ? effectiveColor : Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: isOutlined ? effectiveColor : Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
+              if (subLabel != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subLabel!,
+                  style: TextStyle(
+                    color: (isOutlined ? effectiveColor : Colors.white)
+                        .withValues(alpha: 0.8),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

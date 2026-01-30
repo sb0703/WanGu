@@ -1,6 +1,7 @@
 import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
+import '../../models/item.dart';
 
 const List<Enemy> evilSpirits = [
   Enemy(
@@ -11,6 +12,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 80, hp: 80, attack: 25, defense: 0, speed: 15, insight: 1, purity: -10),
     loot: ['soul_dust', 'talisman_paper_roll', ...DropTables.lowLevelConsumables],
     xpReward: 30,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'hanged_ghost',
@@ -20,6 +22,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 120, hp: 120, attack: 35, defense: 5, speed: 12, insight: 2, purity: -20),
     loot: ['rope', 'withered_heart_wood', ...DropTables.lowLevelConsumables],
     xpReward: 40,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'water_wraith',
@@ -29,6 +32,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 150, hp: 150, attack: 30, defense: 10, speed: 8, insight: 3, purity: -15),
     loot: ['water_pearl', 'spirit_stone_low', ...DropTables.lowLevelConsumables],
     xpReward: 45,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'paper_doll',
@@ -38,6 +42,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 60, hp: 60, attack: 20, defense: 2, speed: 18, insight: 5, purity: -5),
     loot: ['talisman_paper_roll', 'paper_charm', ...DropTables.lowLevelConsumables],
     xpReward: 35,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'corpse_puppet',
@@ -47,6 +52,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 200, hp: 200, attack: 40, defense: 20, speed: 5, insight: 0, purity: -30),
     loot: ['corpse_nail', 'cloth_robe', ...DropTables.lowLevelConsumables],
     xpReward: 50,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'plague_ghost',
@@ -56,6 +62,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 180, hp: 180, attack: 25, defense: 10, speed: 10, insight: 4, purity: -50),
     loot: ['plague_sac', 'white_dew_fern', ...DropTables.lowLevelConsumables],
     xpReward: 55,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'shadow_under_lamp',
@@ -65,6 +72,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 100, hp: 100, attack: 30, defense: 50, speed: 20, insight: 6, purity: -10),
     loot: ['shadow_dust', 'oil', ...DropTables.lowLevelConsumables],
     xpReward: 42,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'mirror_ghost',
@@ -74,6 +82,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 140, hp: 140, attack: 35, defense: 15, speed: 25, insight: 8, purity: -20),
     loot: ['mirror_shard', 'mask_fragment', ...DropTables.midLevelConsumables],
     xpReward: 58,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'crying_wall',
@@ -83,6 +92,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 300, hp: 300, attack: 20, defense: 40, speed: 0, insight: 5, purity: -25),
     loot: ['stone_heart_flower', 'crying_ash', ...DropTables.midLevelConsumables],
     xpReward: 60,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'bone_lamp_child',
@@ -92,6 +102,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 90, hp: 90, attack: 40, defense: 5, speed: 15, insight: 10, purity: -15),
     loot: ['bone_lamp_wick', 'spirit_fire_lamp', ...DropTables.lowLevelConsumables],
     xpReward: 48,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'resentful_infant',
@@ -101,6 +112,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 110, hp: 110, attack: 45, defense: 8, speed: 18, insight: 2, purity: -40),
     loot: ['cloth_robe', 'soul_dust', ...DropTables.lowLevelConsumables],
     xpReward: 52,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'night_wanderer',
@@ -110,6 +122,7 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 350, hp: 350, attack: 50, defense: 25, speed: 20, insight: 12, purity: -10),
     loot: ['token_fragment', 'broken_silver', ...DropTables.midLevelConsumables],
     xpReward: 80,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'hell_guard',
@@ -119,5 +132,6 @@ const List<Enemy> evilSpirits = [
     stats: Stats(maxHp: 400, hp: 400, attack: 55, defense: 30, speed: 15, insight: 15, purity: 0),
     loot: ['chain', 'spirit_locking_chain', ...DropTables.midLevelConsumables],
     xpReward: 90,
+    element: ElementType.metal,
   ),
 ];

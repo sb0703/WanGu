@@ -8,8 +8,13 @@ const Map<String, Item> equipmentItems = {
     description: '凡俗利器，适合初入江湖。',
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
+    element: ElementType.metal,
     attackBonus: 15,
     price: 35,
+    skillName: '青光斩',
+    skillDesc: '消耗灵力发出青光剑气，造成1.5倍伤害。',
+    skillCost: 10,
+    skillDamageMultiplier: 1.5,
   ),
   'spirit_pattern_sword_embryo': Item(
     id: 'spirit_pattern_sword_embryo',
@@ -17,6 +22,7 @@ const Map<String, Item> equipmentItems = {
     description: '可刻灵纹，后续升级空间大。',
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
+    element: ElementType.wood,
     attackBonus: 10,
     price: 50,
   ),
@@ -26,8 +32,13 @@ const Map<String, Item> equipmentItems = {
     description: '附寒意，适合近身刺杀。',
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
+    element: ElementType.water,
     attackBonus: 18,
     price: 60,
+    skillName: '寒霜刺',
+    skillDesc: '消耗灵力刺出寒气，造成1.6倍伤害。',
+    skillCost: 12,
+    skillDamageMultiplier: 1.6,
   ),
   'red_flame_saber': Item(
     id: 'red_flame_saber',
@@ -35,8 +46,13 @@ const Map<String, Item> equipmentItems = {
     description: '灼烧伤口，易引仇恨。',
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
+    element: ElementType.fire,
     attackBonus: 22,
     price: 70,
+    skillName: '赤焰斩',
+    skillDesc: '消耗灵力斩出烈火，造成1.8倍伤害。',
+    skillCost: 15,
+    skillDamageMultiplier: 1.8,
   ),
   'mountain_breaking_hammer': Item(
     id: 'mountain_breaking_hammer',
@@ -44,9 +60,14 @@ const Map<String, Item> equipmentItems = {
     description: '重击破甲，耗体力。',
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
+    element: ElementType.earth,
     attackBonus: 30,
     speed: -5,
     price: 80,
+    skillName: '断岳击',
+    skillDesc: '消耗灵力重击地面，造成2.0倍伤害。',
+    skillCost: 20,
+    skillDamageMultiplier: 2.0,
   ),
   'flowing_light_spear': Item(
     id: 'flowing_light_spear',
@@ -131,7 +152,7 @@ const Map<String, Item> equipmentItems = {
     type: ItemType.equipment,
     slot: EquipmentSlot.mainHand,
     attackBonus: 40,
-    hpBonus: -10, 
+    hpBonus: -10,
     price: 250,
   ),
   'mountain_suppressing_axe': Item(
@@ -266,7 +287,8 @@ const Map<String, Item> equipmentItems = {
     name: '赤阳护腕',
     description: '抗寒/增力，副作用是躁火。',
     type: ItemType.equipment,
-    slot: EquipmentSlot.accessory, // Accessory? Or Body? Bracer usually accessory or secondary armor. Let's say Accessory.
+    slot: EquipmentSlot
+        .accessory, // Accessory? Or Body? Bracer usually accessory or secondary armor. Let's say Accessory.
     defenseBonus: 6,
     attackBonus: 5,
     price: 70,
@@ -385,27 +407,7 @@ const Map<String, Item> equipmentItems = {
     name: '储物袋',
     description: '容纳杂物，容量有限。',
     type: ItemType.equipment,
-    slot: EquipmentSlot.mount, // Mount provides bag space. Bag is a "Vehicle" for items? 
-    // Or just keep as ItemType.storage if supported. 
-    // Since I removed storage logic from GameState, I should map it to something that gives space.
-    // Or add ItemType.storage logic back?
-    // User said "Only equip weapon and armor" (implied slots).
-    // If I map to Mount, player can only equip ONE bag.
-    // If I map to Accessory, player can equip ONE.
-    // Design doc: "座驾 ... 背包格子".
-    // So Bag should probably be an Accessory or Mount.
-    // Let's make Storage Bag a "Mount" (as in carried container) or maybe Accessory.
-    // Or maybe it's just an item in inventory that expands space?
-    // GameState logic: `bagCapacity` sums `spaceBonus` from `equipped`.
-    // So it MUST be equipped to work.
-    // If I map it to Accessory, it competes with Rings.
-    // If I map to Mount, it competes with Flying Sword.
-    // Let's map 'storage_bag' to Accessory for now, as early game Mount is rare.
-    // Actually, maybe 'storage_bag' should be `other` and NOT equippable, just passive?
-    // But code says `spaceBonus` comes from `equipped`.
-    // Let's make it Accessory.
-    // Wait, `spaceBonus` is usually `storage` type.
-    // If I map to Accessory, player can equip it.
+    slot: EquipmentSlot.mount,
     spaceBonus: 10,
     price: 50,
   ),

@@ -54,6 +54,10 @@ class Item {
     this.spaceBonus = 0,
     this.levelReq = 1,
     this.price = 0,
+    this.skillName,
+    this.skillDesc,
+    this.skillCost = 0,
+    this.skillDamageMultiplier = 1.0,
   });
 
   final String id; // ID
@@ -71,4 +75,10 @@ class Item {
   final int spaceBonus; // 空间加成 (用于储物袋)
   final int levelReq; // 等级要求
   final int price; // 价格 (灵石/金币)
+
+  // 法术/技能相关 (通常用于武器或特定法宝)
+  final String? skillName;
+  final String? skillDesc;
+  final int skillCost; // 灵力消耗
+  final double skillDamageMultiplier; // 技能伤害倍率 (基于攻击力)
 }

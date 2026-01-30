@@ -1,6 +1,7 @@
 import '../drop_tables.dart';
 import '../../models/enemy.dart';
 import '../../models/stats.dart';
+import '../../models/item.dart';
 
 const List<Enemy> demons = [
   Enemy(
@@ -24,6 +25,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 65,
+    element: ElementType.water, // Blood related -> Water
   ),
   Enemy(
     id: 'soul_eater',
@@ -41,6 +43,7 @@ const List<Enemy> demons = [
     ),
     loot: ['soul_sac', 'mask_fragment', ...DropTables.midLevelConsumables],
     xpReward: 60,
+    element: ElementType.wood, // Spirit/Soul -> Wood/Wind
   ),
   Enemy(
     id: 'heart_demon_disciple',
@@ -63,6 +66,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 75,
+    element: ElementType.fire, // Heart/Mind -> Fire
   ),
   Enemy(
     id: 'corrupt_alchemist',
@@ -85,6 +89,7 @@ const List<Enemy> demons = [
       ...DropTables.lowLevelConsumables,
     ],
     xpReward: 55,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'corpse_refiner',
@@ -106,6 +111,7 @@ const List<Enemy> demons = [
       ...DropTables.basicEquipment,
     ],
     xpReward: 70,
+    element: ElementType.earth,
   ),
   Enemy(
     id: 'mad_cultivator',
@@ -128,6 +134,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 60,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'shadow_assassin',
@@ -150,6 +157,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 80,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'spirit_hunter',
@@ -172,6 +180,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 85,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'lamp_thief',
@@ -189,6 +198,7 @@ const List<Enemy> demons = [
     ),
     loot: ['lamp_oil', 'incense', ...DropTables.lowLevelConsumables],
     xpReward: 50,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'fake_envoy',
@@ -206,6 +216,7 @@ const List<Enemy> demons = [
     ),
     loot: ['fake_token', 'spirit_stone_med', ...DropTables.lowLevelConsumables],
     xpReward: 45,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'gu_master',
@@ -223,6 +234,7 @@ const List<Enemy> demons = [
     ),
     loot: ['gu_jar', 'antidote_pill', ...DropTables.midLevelConsumables],
     xpReward: 72,
+    element: ElementType.wood,
   ),
   Enemy(
     id: 'fire_demon',
@@ -245,6 +257,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 95,
+    element: ElementType.fire,
   ),
   Enemy(
     id: 'possessed_remnant',
@@ -266,6 +279,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 90,
+    element: ElementType.water,
   ),
   Enemy(
     id: 'lightning_cultivator',
@@ -288,6 +302,7 @@ const List<Enemy> demons = [
       ...DropTables.midLevelConsumables,
     ],
     xpReward: 88,
+    element: ElementType.metal,
   ),
   Enemy(
     id: 'bone_crafter',
@@ -305,5 +320,6 @@ const List<Enemy> demons = [
     ),
     loot: ['bone_tool', 'crafting_hammer', ...DropTables.basicEquipment],
     xpReward: 78,
+    element: ElementType.metal,
   ),
 ];
