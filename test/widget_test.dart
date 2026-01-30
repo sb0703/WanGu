@@ -6,14 +6,17 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanggu_flutter/src/app.dart';
 
 void main() {
   testWidgets('App loads with overview tab', (WidgetTester tester) async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+
     await tester.pumpWidget(const WangGuApp());
 
-    expect(find.text('概览'), findsOneWidget);
+    expect(find.text('宗门'), findsOneWidget);
     expect(find.text('修炼'), findsOneWidget);
   });
 }

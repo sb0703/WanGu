@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../state/game_state.dart';
+import 'map_section.dart';
 
 class SectSection extends StatelessWidget {
   const SectSection({super.key});
@@ -13,6 +14,18 @@ class SectSection extends StatelessWidget {
 
     // 宗门设施数据
     final facilities = [
+      _FacilityData(
+        name: '外出游历',
+        description: '探索世界，寻找机缘',
+        icon: Icons.explore,
+        color: const Color(0xFF29B6F6),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MapScreen()),
+          );
+        },
+      ),
       _FacilityData(
         name: '宗门大殿',
         description: '处理宗门事务，查看宗门信息',
@@ -56,9 +69,9 @@ class SectSection extends StatelessWidget {
         onTap: () {
           if (!game.isDead) {
             context.read<GameState>().rest();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('休息了一会儿，体力已恢复。')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('休息了一会儿，体力已恢复。')));
           }
         },
       ),
@@ -98,16 +111,13 @@ class SectSection extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Divider(),
                 const SizedBox(height: 16),
-                Text(
-                  '宗门建设中...',
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text('宗门建设中...', style: theme.textTheme.bodySmall),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
-        
+
         Text(
           '宗门设施',
           style: theme.textTheme.titleLarge?.copyWith(
@@ -160,7 +170,7 @@ class _FacilityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       elevation: 0,
       color: theme.colorScheme.surface,

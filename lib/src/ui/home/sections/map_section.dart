@@ -6,6 +6,75 @@ import 'package:provider/provider.dart';
 
 import '../../../models/map_node.dart';
 import '../../../state/game_state.dart';
+import '../widgets/battle_overlay.dart';
+import '../widgets/breakthrough_overlay.dart';
+import '../widgets/log_ticker.dart';
+import '../widgets/npc_overlay.dart';
+
+class MapScreen extends StatelessWidget {
+  const MapScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final game = context.watch<GameState>();
+    final isGameOver = game.isGameOver;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('外出游历')),
+      body: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                const Positioned.fill(child: MapSection()),
+                if (game.showingBreakthrough) const BreakthroughOverlay(),
+                if (game.currentInteractionNpc != null) const NpcOverlay(),
+                if (game.currentBattle != null) const BattleOverlay(),
+                if (isGameOver)
+                  Container(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    alignment: Alignment.center,
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              '寿元已尽，道消身死',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text('你可以重返凡尘，重新开始修行。'),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              icon: const Icon(Icons.restart_alt),
+                              onPressed: () {
+                                context.read<GameState>().resetGame();
+                                Navigator.pop(context);
+                              },
+                              label: const Text('重开一局'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 1),
+          const LogTicker(),
+        ],
+      ),
+    );
+  }
+}
 
 class MapSection extends StatefulWidget {
   const MapSection({super.key});
