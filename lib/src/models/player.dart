@@ -4,14 +4,17 @@ import 'item.dart';
 import 'realm_stage.dart';
 import 'stats.dart';
 
-/// 玩家模型
+/// Player model
 class Player {
   const Player({
     required this.name,
-    this.gender = '男', // 默认性别
-    this.race = Race.human, // 默认种族
+    this.gender = '男', // default gender
+    this.appearance = '平平无奇',
+    this.roots = const {},
+    this.traits = const [],
+    this.race = Race.human,
     required this.stageIndex,
-    this.level = 1, // 1-10 (显示为 1 到 10 层/圆满)
+    this.level = 1, // 1-10 (显示为 1..10 层小境界)
     required this.stats,
     required this.xp,
     this.contribution = 0,
@@ -21,27 +24,30 @@ class Player {
     this.buffIds = const [], // 状态效果ID列表
   });
 
-  final String name; // 姓名
-  final String gender; // 性别
-  final Race race; // 种族
-  final int stageIndex; // 境界索引 (如: 0=练气, 1=筑基)
-  final int level; // 小境界层数: 1..9, 10=大圆满
-  final Stats stats; // 基础属性
-  final int xp; // 当前修为(经验值)
-  final int contribution; // 宗门贡献
-  final int lifespanDays; // 剩余寿元(天)
-  final List<Item> inventory; // 背包物品
-  final List<Item> equipped; // 已装备物品
-  final List<String> buffIds; // 当前生效的状态ID
+  final String name;
+  final String gender;
+  final String appearance;
+  final Map<String, int> roots;
+  final List<String> traits;
+  final Race race;
+  final int stageIndex; // 0=练气, 1=筑基...
+  final int level; // 1..9, 10=大圆满
+  final Stats stats;
+  final int xp;
+  final int contribution;
+  final int lifespanDays; // days
+  final List<Item> inventory;
+  final List<Item> equipped;
+  final List<String> buffIds;
 
-  /// 获取当前大境界信息
+  /// 当前大境界
   RealmStage get realm => RealmStage.stages[stageIndex];
 
-  /// 获取当前生效的所有Buff对象
+  /// 当前有效的所有 Buff
   List<Buff> get activeBuffs =>
       buffIds.map((id) => BuffsRepository.get(id)).whereType<Buff>().toList();
 
-  /// 获取生效后的最终属性 (包含Buff加成)
+  /// Buff 加成后的最终属性
   Stats get effectiveStats {
     Stats finalStats = stats;
     for (final buff in activeBuffs) {
@@ -50,15 +56,13 @@ class Player {
     return finalStats;
   }
 
-  // 计算当前等级的修为上限
-  // 基础修为 * (1 + (level-1) * 0.5) -> 逐级递增
+  /// 当前等级需要的最大经验
   int get currentMaxXp {
     final base = realm.maxXp;
-    // Level 1: 100%, Level 2: 150%, ..., Level 9: 500%
     return (base * (1 + (level - 1) * 0.5)).toInt();
   }
 
-  /// 获取境界文本描述 (如: 练气三层)
+  /// 境界文字描述
   String get realmLabel {
     final realmName = realm.getName(race);
     if (level >= 10) return '$realmName大圆满';
@@ -70,6 +74,9 @@ class Player {
   Player copyWith({
     String? name,
     String? gender,
+    String? appearance,
+    Map<String, int>? roots,
+    List<String>? traits,
     Race? race,
     int? stageIndex,
     int? level,
@@ -84,6 +91,9 @@ class Player {
     return Player(
       name: name ?? this.name,
       gender: gender ?? this.gender,
+      appearance: appearance ?? this.appearance,
+      roots: roots ?? this.roots,
+      traits: traits ?? this.traits,
       race: race ?? this.race,
       stageIndex: stageIndex ?? this.stageIndex,
       level: level ?? this.level,

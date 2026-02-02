@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+import '../models/trait.dart';
+
+class TraitsRepository {
+  static final List<Map<String, dynamic>> _pool = [
+    {'name': '穿越者', 'desc': '你来自异世界。悟性+20，初始获得《小学语文》。', 'color': Colors.amber},
+    {'name': '伴生异火', 'desc': '体内封印着一团青莲地心火。火系伤害+30%。', 'color': Colors.purple},
+    {'name': '独臂大侠', 'desc': '出生时少一条手臂。无法装备副手，攻击力-10%。', 'color': Colors.red},
+    {'name': '绝户手', 'desc': '对异性造成的伤害+20%。', 'color': Colors.blue},
+    {'name': '扫把星', 'desc': '幸运值-10，但更容易遇到危险（高风险高回报）。', 'color': Colors.grey},
+    {'name': '天生神力', 'desc': '攻击力+5，负重+10。', 'color': Colors.blue},
+    {'name': '过目不忘', 'desc': '悟性+10，修炼速度+5%。', 'color': Colors.purple},
+    {'name': '多情种', 'desc': '魅力+20，极易陷入情感纠葛。', 'color': Colors.pink},
+    {'name': '丹炉转世', 'desc': '炼丹成功率+10%，但遇到火灾事件概率+5%。', 'color': Colors.deepOrange},
+    {'name': '剑骨', 'desc': '剑系技能伤害+20%，其他武器熟练获取-10%。', 'color': Colors.indigo},
+    {'name': '佛缘深厚', 'desc': '心境稳定+15，遇邪祟类事件更少。', 'color': Colors.teal},
+    {'name': '魔性入骨', 'desc': '魔道相关收益+15%，心魔事件概率+10%。', 'color': Colors.red},
+    {'name': '命带桃花', 'desc': '魅力+15，社交事件更频繁（含麻烦）。', 'color': Colors.pink},
+    {'name': '孤辰', 'desc': '社交事件减少，修炼效率+5%。', 'color': Colors.blueGrey},
+    {'name': '福星高照', 'desc': '幸运值+10，掉落品质略提升。', 'color': Colors.amber},
+    {'name': '穷鬼命', 'desc': '金钱收益-20%，但更容易触发奇遇补偿。', 'color': Colors.grey},
+    {'name': '天生灵根', 'desc': '修炼速度+10%，突破资源需求-5%。', 'color': Colors.green},
+    {'name': '杂灵根', 'desc': '修炼速度-5%，但可更快掌握多系功法。', 'color': Colors.grey},
+    {'name': '灵台清明', 'desc': '抗幻术+20%，悟性+5。', 'color': Colors.purple},
+    {'name': '耳聪目明', 'desc': '探索发现概率+10%，但更容易“看到不该看的”。', 'color': Colors.cyan},
+    {'name': '铁胃', 'desc': '食用灵食/丹药副作用-20%。', 'color': Colors.brown},
+    {'name': '药罐子', 'desc': '生命恢复+10%，但更容易触发“药物依赖”。', 'color': Colors.green},
+    {'name': '火灵亲和', 'desc': '火系伤害+15%，受水系伤害+10%。', 'color': Colors.deepOrange},
+    {'name': '水灵亲和', 'desc': '水系伤害+15%，受雷系伤害+10%。', 'color': Colors.blue},
+    {'name': '木灵亲和', 'desc': '治疗/恢复效果+15%，受火系伤害+10%。', 'color': Colors.green},
+    {'name': '金灵亲和', 'desc': '破甲/穿透+10%，受木系控制+10%。', 'color': Colors.amber},
+    {'name': '土灵亲和', 'desc': '防御+10%，移动/闪避-5%。', 'color': Colors.brown},
+    {'name': '雷灵亲和', 'desc': '雷系伤害+15%，走火入魔概率+5%。', 'color': Colors.purple},
+    {'name': '风灵亲和', 'desc': '移动速度+10%，防御-5%。', 'color': Colors.teal},
+    {'name': '冰魄体', 'desc': '抗寒+30%，火系伤害-10%。', 'color': Colors.cyan},
+    {'name': '炎阳体', 'desc': '抗火+30%，寒系伤害-10%。', 'color': Colors.deepOrange},
+    {'name': '百毒不侵', 'desc': '中毒概率-50%，但解毒丹效果-10%。', 'color': Colors.green},
+    {'name': '天生怕疼', 'desc': '受到暴击伤害+10%，但闪避+5%。', 'color': Colors.grey},
+    {'name': '皮糙肉厚', 'desc': '防御+8，治疗效果-5%。', 'color': Colors.brown},
+    {'name': '身轻如燕', 'desc': '闪避+10%，负重-10。', 'color': Colors.teal},
+    {'name': '命硬', 'desc': '濒死时保命概率+15%，但运气-5。', 'color': Colors.blueGrey},
+    {'name': '短命种', 'desc': '寿元上限-10%，但修炼速度+8%。', 'color': Colors.red},
+    {'name': '长命百岁', 'desc': '寿元上限+10%，突破时资源需求+5%。', 'color': Colors.green},
+    {'name': '先天剑意', 'desc': '初始获得《基础剑意》；剑系悟性+10。', 'color': Colors.indigo},
+    {'name': '先天丹感', 'desc': '初始获得《丹经摘录》；炼丹成功率+8%。', 'color': Colors.deepOrange},
+    {'name': '先天阵识', 'desc': '初始获得《阵纹入门》；布阵稳定+8%。', 'color': Colors.teal},
+    {'name': '先天符骨', 'desc': '初始获得《符箓百字》；制符成功率+8%。', 'color': Colors.purple},
+    {'name': '书生气', 'desc': '谈判/说服+10，近战伤害-5%。', 'color': Colors.blue},
+    {'name': '猎户出身', 'desc': '野外生存+10%，获取兽材概率+10%。', 'color': Colors.green},
+    {'name': '世家子弟', 'desc': '初始灵石+200，仇家事件概率+5%。', 'color': Colors.amber},
+    {'name': '孤儿', 'desc': '初始资源-10%，但更容易被名师收徒。', 'color': Colors.grey},
+    {'name': '宗门弃徒', 'desc': '宗门声望-10，但黑市交易更顺。', 'color': Colors.blueGrey},
+    {'name': '天道眷顾', 'desc': '突破失败惩罚-20%，但天劫关注+5%。', 'color': Colors.amber},
+    {'name': '天道厌弃', 'desc': '突破成功率-5%，但稀有奇遇概率+8%。', 'color': Colors.grey},
+    {'name': '灵宠缘', 'desc': '更容易遇到灵宠事件，灵宠培养成本-10%。', 'color': Colors.green},
+    {'name': '驭兽天赋', 'desc': '灵兽战斗效率+15%，但对人族声望-5。', 'color': Colors.teal},
+    {'name': '财运亨通', 'desc': '金币/灵石收益+15%，但盗贼事件+5%。', 'color': Colors.amber},
+    {'name': '守财奴', 'desc': '购买价格+10%，但存款保值事件更优。', 'color': Colors.brown},
+    {'name': '易招雷', 'desc': '雷击事件概率+10%，雷系伤害+10%。', 'color': Colors.purple},
+    {'name': '阴阳眼', 'desc': '能看见阴灵线索（解锁事件），心神消耗+5%。', 'color': Colors.blueGrey},
+    {'name': '嗜战', 'desc': '战斗奖励+10%，休息恢复-10%。', 'color': Colors.red},
+    {'name': '怕事', 'desc': '遭遇战概率-10%，但关键战斗时士气-5%。', 'color': Colors.grey},
+    {'name': '天生好奇', 'desc': '探索收益+10%，陷阱概率+5%。', 'color': Colors.cyan},
+    {'name': '谨慎过头', 'desc': '陷阱概率-10%，奇遇概率-5%。', 'color': Colors.blueGrey},
+    {'name': '命带贵人', 'desc': '关键节点更易遇到援手事件。', 'color': Colors.amber},
+    {'name': '命带小人', 'desc': '背刺/诬陷事件概率+8%，但反杀收益更高。', 'color': Colors.grey},
+    {'name': '口才了得', 'desc': '谈判成功率+12%，容易惹祸上身。', 'color': Colors.pink},
+    {'name': '冷面', 'desc': '魅力-10，威慑+10。', 'color': Colors.blueGrey},
+    {'name': '杀气', 'desc': '对妖兽伤害+10%，城镇声望-5。', 'color': Colors.red},
+    {'name': '慈悲', 'desc': '对邪祟伤害+10%，杀戮收益-10%。', 'color': Colors.teal},
+    {'name': '天生体修', 'desc': '体修功法效果+15%，法修悟性-5。', 'color': Colors.brown},
+    {'name': '天生法修', 'desc': '法术伤害+12%，近战伤害-5%。', 'color': Colors.indigo},
+    {'name': '灵气过敏', 'desc': '在灵气浓郁地带收益+10%，在稀薄地带收益-10%。', 'color': Colors.cyan},
+    {'name': '贫灵之地长大', 'desc': '在灵气稀薄地带修炼效率不降，灵地收益-5%。', 'color': Colors.grey},
+    {'name': '渡劫体质', 'desc': '天劫伤害-10%，天劫频率+5%。', 'color': Colors.purple},
+    {'name': '怕雷', 'desc': '天劫伤害+10%，雷域收益+10%。', 'color': Colors.grey},
+    {'name': '心魔易生', 'desc': '心魔事件概率+12%，但悟道收益+10%。', 'color': Colors.red},
+    {'name': '道心坚韧', 'desc': '心魔事件概率-10%，突破收益略降低。', 'color': Colors.teal},
+    {'name': '酒仙苗子', 'desc': '饮酒类事件收益+10%，中毒/昏迷概率+5%。', 'color': Colors.purple},
+    {'name': '一身正气', 'desc': '邪修交易成功率-15%，正道任务奖励+10%。', 'color': Colors.blue},
+    {'name': '暗市常客', 'desc': '黑市价格-10%，正道声望-5。', 'color': Colors.blueGrey},
+    {'name': '机关痴', 'desc': '机关/傀儡类成功率+10%，制作耗时+5%。', 'color': Colors.orange},
+    {'name': '炼器奇才', 'desc': '炼器成功率+10%，材料消耗+5%。', 'color': Colors.orange},
+    {'name': '灵纹手', 'desc': '刻纹/铭文成功率+12%，战斗中取物更慢。', 'color': Colors.amber},
+    {'name': '急性子', 'desc': '出手速度+5%，闭关收益-5%。', 'color': Colors.red},
+    {'name': '慢性子', 'desc': '闭关收益+8%，探索速度-5%。', 'color': Colors.blue},
+    {'name': '喜静', 'desc': '打坐收益+10%，社交收益-10%。', 'color': Colors.teal},
+    {'name': '喜闹', 'desc': '社交收益+10%，闭关收益-10%。', 'color': Colors.pink},
+    {'name': '天生夜行', 'desc': '夜间事件收益+10%，白天效率-5%。', 'color': Colors.indigo},
+    {'name': '阳光体质', 'desc': '白天效率+10%，夜间遭遇概率+5%。', 'color': Colors.amber},
+    {'name': '刀口舔血', 'desc': '战斗掉落+8%，受伤概率+5%。', 'color': Colors.red},
+    {'name': '命里缺钱', 'desc': '购买价格+8%，但任务报酬+8%。', 'color': Colors.grey},
+    {'name': '厨神转世', 'desc': '灵食效果+15%，炼丹成功率-5%。', 'color': Colors.green},
+    {'name': '诗心', 'desc': '悟道事件更易触发，战斗收益-5%。', 'color': Colors.purple},
+    {'name': '铁匠气', 'desc': '炼器/修补更强，谈判成功率-5%。', 'color': Colors.brown},
+    {'name': '走南闯北', 'desc': '地图探索效率+12%，宗门声望获取-5%。', 'color': Colors.teal},
+    {'name': '宅修', 'desc': '宗门修炼收益+10%，野外生存-5%。', 'color': Colors.blueGrey},
+    {'name': '灵台有缺', 'desc': '悟性-10，但获得“额外命格槽”（可扩展build）。', 'color': Colors.grey},
+    {'name': '双生影', 'desc': '战斗中小概率触发“影分身”一次，之后心神-5（持续）。', 'color': Colors.indigo},
+    {'name': '命运线断', 'desc': '因果追踪概率-10%，但奇遇不会提前预警。', 'color': Colors.blueGrey},
+    {'name': '渡人', 'desc': '救援/护送任务奖励+12%，杀戮收益-12%。', 'color': Colors.teal},
+    {'name': '无情', 'desc': '杀戮收益+12%，情感事件更易出坏结局。', 'color': Colors.red},
+    {'name': '天外来书', 'desc': '初始获得《异界百科》；探索/鉴定+8%。', 'color': Colors.amber},
+  ];
+
+  static final Map<String, Trait> _traits = {
+    for (var data in _pool)
+      data['name']: Trait(
+        id: data['name'],
+        name: data['name'],
+        description: data['desc'],
+        color: data['color'],
+      ),
+  };
+
+  static Trait? get(String name) => _traits[name];
+
+  static List<Trait> getAll() => _traits.values.toList();
+
+  static void updateTraits(List<dynamic> remoteData) {
+    if (remoteData.isEmpty) return;
+
+    for (final data in remoteData) {
+      if (data is! Map) continue;
+      final name = data['name'];
+      if (name == null) continue;
+
+      // Handle color parsing if needed (assuming backend sends hex string or name)
+      // For now, we reuse existing color if available, or parse from string
+      Color color = Colors.grey;
+      if (data['color'] != null) {
+        // Simple hex parser: "#FF0000" or "0xFF0000"
+        final colorStr = data['color'].toString();
+        if (colorStr.startsWith('#')) {
+          color = Color(int.parse(colorStr.substring(1), radix: 16) + 0xFF000000);
+        } else if (colorStr.startsWith('0x')) {
+          color = Color(int.parse(colorStr));
+        }
+      } else {
+        // Try to keep existing color if we are just updating description/effects
+        color = _traits[name]?.color ?? Colors.grey;
+      }
+
+      _traits[name] = Trait(
+        id: data['id']?.toString() ?? name,
+        name: name,
+        description: data['desc'] ?? data['description'] ?? '',
+        color: color,
+      );
+    }
+  }
+}

@@ -92,4 +92,48 @@ const Map<String, Item> legacyItems = {
     hpBonus: 50,
     price: 1000,
   ),
+  
+  // --- Trait Specific Items ---
+  'primary_school_language': Item(
+    id: 'primary_school_language',
+    name: '《小学语文》',
+    description: '异世界的启蒙读物，蕴含着大道至简的智慧。',
+    type: ItemType.other,
+    price: 1,
+  ),
+  'basic_sword_intent': Item(
+    id: 'basic_sword_intent',
+    name: '《基础剑意》',
+    description: '记载着剑道入门的感悟，剑修筑基必备。',
+    type: ItemType.other,
+    price: 50,
+  ),
+  'pill_sutra_excerpt': Item(
+    id: 'pill_sutra_excerpt',
+    name: '《丹经摘录》',
+    description: '上古丹经的残篇，记录了一些基础炼丹心得。',
+    type: ItemType.other,
+    price: 50,
+  ),
+  'array_patterns_intro': Item(
+    id: 'array_patterns_intro',
+    name: '《阵纹入门》',
+    description: '阵法师的入门教材，讲解了基础阵纹的刻画。',
+    type: ItemType.other,
+    price: 50,
+  ),
+  'talisman_hundred_words': Item(
+    id: 'talisman_hundred_words',
+    name: '《符箓百字》',
+    description: '包含一百个基础符文的临摹本。',
+    type: ItemType.other,
+    price: 50,
+  ),
+  'otherworld_encyclopedia': Item(
+    id: 'otherworld_encyclopedia',
+    name: '《异界百科》',
+    description: '记录了异世界风土人情的奇书，甚至包括了如何制作肥皂。',
+    type: ItemType.other,
+    price: 100,
+  ),
 };

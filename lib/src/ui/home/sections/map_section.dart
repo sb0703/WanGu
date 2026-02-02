@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../models/map_node.dart';
 import '../../../state/game_state.dart';
+import '../../character_creation/character_creation_screen.dart';
 import '../widgets/battle_overlay.dart';
 import '../widgets/breakthrough_overlay.dart';
 import '../widgets/log_ticker.dart';
@@ -55,8 +56,13 @@ class MapScreen extends StatelessWidget {
                             FilledButton.icon(
                               icon: const Icon(Icons.restart_alt),
                               onPressed: () {
-                                context.read<GameState>().resetGame();
-                                Navigator.pop(context);
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const CharacterCreationScreen(),
+                                  ),
+                                  (route) => false,
+                                );
                               },
                               label: const Text('重开一局'),
                             ),

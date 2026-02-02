@@ -65,6 +65,7 @@ class NpcsRepository {
         '只要你有灵石，什么都好说。',
         '最近生意不好做啊...',
       ],
+      isMobile: true,
     ),
   };
 

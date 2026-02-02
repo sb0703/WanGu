@@ -11,6 +11,10 @@ class Npc {
   final Stats stats; // 属性
   final List<String> dialogues; // 对话列表
   final int friendship; // 好感度 (0-100, 50 为中立)
+  final bool isMobile; // 是否会自主移动
+  final List<String> tags; // 性格/标签
+  final String displayRealm; // 显示境界
+  final List<String> inventory; // NPC 背包 (Item IDs)
 
   const Npc({
     required this.id,
@@ -20,6 +24,10 @@ class Npc {
     required this.stats,
     this.dialogues = const ['...'],
     this.friendship = 50,
+    this.isMobile = false,
+    this.tags = const [],
+    this.displayRealm = '凡人',
+    this.inventory = const [],
   });
 
   /// 复制并修改
@@ -30,6 +38,10 @@ class Npc {
     Stats? stats,
     List<String>? dialogues,
     int? friendship,
+    bool? isMobile,
+    List<String>? tags,
+    String? displayRealm,
+    List<String>? inventory,
   }) {
     return Npc(
       id: id,
@@ -39,6 +51,10 @@ class Npc {
       stats: stats ?? this.stats,
       dialogues: dialogues ?? this.dialogues,
       friendship: friendship ?? this.friendship,
+      isMobile: isMobile ?? this.isMobile,
+      tags: tags ?? this.tags,
+      displayRealm: displayRealm ?? this.displayRealm,
+      inventory: inventory ?? this.inventory,
     );
   }
 }

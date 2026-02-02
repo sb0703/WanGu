@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../state/game_state.dart';
 import '../../state/settings_state.dart';
+import '../character_creation/character_creation_screen.dart';
+import '../login/login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -49,12 +51,21 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('删除存档'),
             subtitle: const Text('删除本地存档记录'),
             onTap: () async {
-              final confirm = await _confirm(context, '确定要删除本地存档吗？');
+              final confirm = await _confirm(
+                context,
+                '确定要删除本地存档吗？\n删除后将返回登录界面。',
+              );
               if (!confirm) return;
               final cleared = await game.clearSave();
               messenger.showSnackBar(
                 SnackBar(content: Text(cleared ? '存档已删除' : '没有可删除的存档')),
               );
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
           ),
           const Divider(),
@@ -75,16 +86,47 @@ class SettingsScreen extends StatelessWidget {
             onTap: () async {
               final confirm = await _confirm(
                 context,
-                '确定要重新开始游戏吗？\n当前未保存的进度将丢失。',
+                '确定要重新开始游戏吗？\n当前未保存的进度将丢失，并重新创建角色。',
               );
               if (!confirm) return;
-              game.resetGame();
-              messenger.showSnackBar(const SnackBar(content: Text('游戏已重置')));
+              // Navigate to creation screen directly
               if (context.mounted) {
-                Navigator.pop(context);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => const CharacterCreationScreen(),
+                  ),
+                  (route) => false,
+                );
               }
             },
           ),
+          if (game.userId != null) ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text(
+                '退出登录',
+                style: TextStyle(color: Colors.redAccent),
+              ),
+              subtitle: const Text('退出当前账号并返回登录界面'),
+              onTap: () async {
+                final confirm = await _confirm(
+                  context,
+                  '确定要退出登录吗？\n未保存的进度可能会丢失。',
+                );
+                if (!confirm) return;
+
+                await game.logout();
+
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+            ),
+          ],
           const Divider(),
           _buildSectionHeader(context, '关于'),
           ListTile(

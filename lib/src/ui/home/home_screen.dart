@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/game_state.dart';
+import '../character_creation/character_creation_screen.dart';
 import '../settings/settings_screen.dart';
 import 'sections/cultivate_section.dart';
 import 'sections/inventory_section.dart';
@@ -124,7 +125,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     color: Colors.black.withValues(alpha: 0.55),
                     alignment: Alignment.center,
                     child: _GameOverCard(
-                      onReset: () => context.read<GameState>().resetGame(),
+                      onReset: () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const CharacterCreationScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      },
                     ),
                   ),
               ],

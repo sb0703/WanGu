@@ -112,6 +112,7 @@ class _NpcOverlayState extends State<NpcOverlay> {
                       children: [
                         FilledButton.icon(
                           onPressed: () {
+                            game.talkToNpc();
                             setState(() {
                               _currentDialog = (List<String>.from(
                                 npc.dialogues,
@@ -120,6 +121,19 @@ class _NpcOverlayState extends State<NpcOverlay> {
                           },
                           icon: const Icon(Icons.chat_bubble_outline),
                           label: const Text('交谈'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () => _showGiftDialog(context, game),
+                          icon: const Icon(Icons.card_giftcard),
+                          label: const Text('赠送'),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () => game.stealFromNpc(),
+                          icon: const Icon(Icons.back_hand),
+                          label: const Text('窃取'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: () {
@@ -150,5 +164,49 @@ class _NpcOverlayState extends State<NpcOverlay> {
         ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
       ),
     ).animate().fadeIn(duration: 200.ms);
+  }
+
+  void _showGiftDialog(BuildContext context, GameState game) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        final inventory = game.player.inventory;
+        if (inventory.isEmpty) {
+          return const SizedBox(
+            height: 200,
+            child: Center(child: Text('背包空空如也')),
+          );
+        }
+        return Container(
+          height: 400,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Text('选择赠送的物品', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: inventory.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final item = inventory[index];
+                    return ListTile(
+                      leading: const Icon(Icons.inventory_2_outlined),
+                      title: Text(item.name),
+                      subtitle: Text(item.description, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      trailing: Text('x${item.count}'),
+                      onTap: () {
+                        game.giftNpc(item);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

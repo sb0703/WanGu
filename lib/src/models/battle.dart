@@ -36,6 +36,7 @@ class Battle {
   List<BattleLog> logs = []; // 战斗日志列表
   BattleState state = BattleState.inProgress; // 当前战斗状态
   int turn = 0; // 回合数
+  String? id; // Server Battle ID
 
   Battle({
     required this.enemy,

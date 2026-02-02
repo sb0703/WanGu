@@ -7,6 +7,8 @@ import '../../../state/game_state.dart';
 import '../widgets/stat_cards.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../data/traits_repository.dart';
+
 class StatsSection extends StatelessWidget {
   const StatsSection({super.key});
 
@@ -21,11 +23,110 @@ class StatsSection extends StatelessWidget {
         children: [
           _CharacterStatusCard(player: player, game: game),
           const SizedBox(height: 24),
+          _TraitsCard(traits: player.traits),
+          const SizedBox(height: 24),
           _EquipmentGrid(player: player),
           const SizedBox(height: 24),
           StatCards(player: player),
         ],
       ),
+    );
+  }
+}
+
+class _TraitsCard extends StatelessWidget {
+  const _TraitsCard({required this.traits});
+
+  final List<String> traits;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.auto_fix_high,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '命格',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (traits.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '暂无特殊命格',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          )
+        else
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 3,
+            children: traits.map((traitName) {
+              final trait = TraitsRepository.get(traitName);
+              // Fallback color and description if not found (shouldn't happen with valid data)
+              final color = trait?.color ?? Colors.grey;
+              final desc = trait?.description ?? '未知命格';
+
+              return Tooltip(
+                message: desc,
+                triggerMode: TooltipTriggerMode.tap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: color.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.stars, size: 16, color: color),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          traitName,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 }

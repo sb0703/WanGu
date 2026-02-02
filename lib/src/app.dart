@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'state/game_state.dart';
 import 'state/settings_state.dart';
-import 'ui/home/home_screen.dart';
+import 'ui/login/login_screen.dart';
 import 'ui/theme/app_theme.dart';
 
 class WangGuApp extends StatelessWidget {
@@ -24,7 +24,7 @@ class WangGuApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
-            home: const HomeScreen(),
+            home: const LoginScreen(),
           );
         },
       ),

@@ -13,6 +13,64 @@ extension PersistenceLogic on GameState {
     final prefs = await _prefs();
     if (prefs == null) return;
     await prefs.setString(GameState._saveKey, jsonEncode(_toJson()));
+
+    // Try cloud sync if possible (non-blocking)
+    saveToServer();
+  }
+
+  Future<void> saveToServer() async {
+    final payload = _toJson();
+    try {
+      if (_remoteSaveId != null) {
+        await _apiService.updateSave(_remoteSaveId!, _player.name, payload);
+        _log('云端存档已同步');
+      } else {
+        // Need userId to bind save? If not logged in, maybe skip or just create unbound if API allows?
+        // Prompt implies binding to user. If no user, maybe we shouldn't save to server or it will fail/be anonymous.
+        // Let's pass userId if available.
+        final result = await _apiService.createSave(
+          _player.name,
+          payload,
+          userId: _userId,
+        );
+        _remoteSaveId = result['id'];
+        _log('云端存档已创建');
+        // Save ID locally
+        final prefs = await _prefs();
+        if (prefs != null) {
+          await prefs.setString(GameState._saveKey, jsonEncode(_toJson()));
+        }
+      }
+    } catch (e) {
+      debugPrint('Cloud save failed: $e');
+    }
+  }
+
+  Future<bool> loadFromServer(String id) async {
+    try {
+      final data = await _apiService.getSave(id);
+      final payload = data['payload'];
+      if (payload != null) {
+        _restoreFromJson(payload);
+        _remoteSaveId = id;
+        _log('云端存档读取成功');
+        notify();
+        saveToDisk(); // Sync to local
+        return true;
+      }
+    } catch (e) {
+      _log('云端读取失败: $e');
+    }
+    return false;
+  }
+
+  Future<List<dynamic>> fetchCloudSaves() async {
+    try {
+      return await _apiService.listSaves(userId: _userId);
+    } catch (e) {
+      debugPrint('Fetch cloud saves failed: $e');
+      return [];
+    }
   }
 
   Future<bool> hasSave() async {
@@ -61,6 +119,8 @@ extension PersistenceLogic on GameState {
       'activeMissions': _activeMissions.map((m) => m.toJson()).toList(),
       'completedMissionIds': _completedMissionIds.toList(),
       'logs': _logs.map((l) => {'message': l.message, 'tick': l.tick}).toList(),
+      'remoteSaveId': _remoteSaveId,
+      'npcStates': _npcStates.map((k, v) => MapEntry(k, _npcToJson(v))),
     };
   }
 
@@ -73,6 +133,7 @@ extension PersistenceLogic on GameState {
       'xp': player.xp,
       'contribution': player.contribution,
       'lifespanDays': player.lifespanDays,
+      'traits': player.traits,
       'stats': {
         'maxHp': player.stats.maxHp,
         'hp': player.stats.hp,
@@ -84,10 +145,67 @@ extension PersistenceLogic on GameState {
         'insight': player.stats.insight,
         'purity': player.stats.purity,
       },
-      'inventory': player.inventory.map((i) => i.id).toList(),
-      'equipped': player.equipped.map((i) => i.id).toList(),
+      'inventory': player.inventory
+          .map((i) => {'id': i.id, 'count': i.count})
+          .toList(),
+      'equipped': player.equipped
+          .map((i) => {'id': i.id, 'count': i.count})
+          .toList(),
       'buffIds': player.buffIds,
     };
+  }
+
+  Map<String, dynamic> _npcToJson(Npc npc) {
+    return {
+      'id': npc.id,
+      'name': npc.name,
+      'title': npc.title,
+      'description': npc.description,
+      'friendship': npc.friendship,
+      'inventory': npc.inventory,
+      'isMobile': npc.isMobile,
+      'displayRealm': npc.displayRealm,
+      'stats': {
+        'maxHp': npc.stats.maxHp,
+        'hp': npc.stats.hp,
+        'maxSpirit': npc.stats.maxSpirit,
+        'spirit': npc.stats.spirit,
+        'attack': npc.stats.attack,
+        'defense': npc.stats.defense,
+        'speed': npc.stats.speed,
+        'insight': npc.stats.insight,
+        'purity': npc.stats.purity,
+      },
+      'dialogues': npc.dialogues,
+      'tags': npc.tags,
+    };
+  }
+
+  Npc _npcFromJson(Map<String, dynamic> json) {
+    final statsMap = json['stats'] ?? {};
+    return Npc(
+      id: json['id'],
+      name: json['name'],
+      title: json['title'] ?? '',
+      description: json['description'],
+      friendship: json['friendship'] ?? 50,
+      inventory: List<String>.from(json['inventory'] ?? []),
+      isMobile: json['isMobile'] ?? false,
+      displayRealm: json['displayRealm'] ?? '凡人',
+      dialogues: List<String>.from(json['dialogues'] ?? []),
+      tags: List<String>.from(json['tags'] ?? []),
+      stats: Stats(
+        maxHp: statsMap['maxHp'] ?? 100,
+        hp: statsMap['hp'] ?? 100,
+        maxSpirit: statsMap['maxSpirit'] ?? 0,
+        spirit: statsMap['spirit'] ?? 0,
+        attack: statsMap['attack'] ?? 10,
+        defense: statsMap['defense'] ?? 5,
+        speed: statsMap['speed'] ?? 10,
+        insight: statsMap['insight'] ?? 10,
+        purity: statsMap['purity'] ?? 100,
+      ),
+    );
   }
 
   void _restoreFromJson(Map<String, dynamic> data) {
@@ -177,12 +295,29 @@ extension PersistenceLogic on GameState {
       }
     }
 
+    final npcLocMap = data['npcLocations'];
+    if (npcLocMap is Map) {
+      _npcLocations = Map<String, String>.from(npcLocMap);
+    } else {
+      _initNpcLocations();
+    }
+
+    final npcStatesMap = data['npcStates'];
+    if (npcStatesMap is Map) {
+      _npcStates = npcStatesMap.map(
+        (k, v) => MapEntry(k.toString(), _npcFromJson(v)),
+      );
+    } else {
+      _npcStates = {};
+    }
+
     _visitedTiles.add(_playerGridPos);
     _currentBattle = null;
     _currentInteractionNpc = null;
     _showingBreakthrough = false;
     _breakthroughSuccess = false;
     _breakthroughMessage = '';
+    _remoteSaveId = data['remoteSaveId']?.toString();
   }
 
   Player _playerFromMap(Map<String, dynamic> data) {
@@ -254,9 +389,13 @@ extension PersistenceLogic on GameState {
           [];
     }
 
+    final traits =
+        (data['traits'] as List?)?.map((e) => e.toString()).toList() ?? [];
+
     return Player(
       name: data['name']?.toString() ?? '无名散修',
       gender: data['gender']?.toString() ?? '男',
+      traits: traits,
       stageIndex: (data['stageIndex'] as num?)?.toInt() ?? 0,
       level: (data['level'] as num?)?.toInt() ?? 1,
       stats: stats,

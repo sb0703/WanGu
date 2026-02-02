@@ -11,6 +11,7 @@ import '../data/missions_repository.dart';
 import '../data/maps_repository.dart';
 import '../data/npcs_repository.dart';
 import '../data/punishments_repository.dart';
+import '../data/traits_repository.dart';
 import '../models/battle.dart';
 import '../models/enemy.dart';
 import '../models/mission.dart';
@@ -22,6 +23,8 @@ import '../models/player.dart';
 import '../models/realm_stage.dart';
 import '../models/stats.dart';
 import '../models/world_clock.dart';
+import '../services/api_service.dart';
+import '../services/npc_generator.dart';
 import '../utils/element_logic.dart';
 
 part 'game_state_parts/inventory_logic.dart';
@@ -59,12 +62,30 @@ class GameState extends ChangeNotifier {
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
     _log('踏入修真界，起点：${_currentNode.name}');
+    _initGameData();
+  }
+
+  Future<void> _initGameData() async {
+    try {
+      final traits = await _apiService.fetchTraits();
+      if (traits.isNotEmpty) {
+        TraitsRepository.updateTraits(traits);
+        notifyListeners();
+        _log('已从天道（服务器）获取最新命格信息');
+      }
+    } catch (e) {
+      debugPrint('Init game data failed: $e');
+    }
   }
 
   static const int _baseBagCapacity = 20;
   static const String _saveKey = 'wangu_save_v1';
 
   final Random _rng;
+  final ApiService _apiService = ApiService();
+  String? _remoteSaveId;
+  Map<String, dynamic>? _userId;
+
   int _tick;
   WorldClock _clock;
   Player _player;
@@ -77,6 +98,8 @@ class GameState extends ChangeNotifier {
   static const int gridCols = 6;
   Point<int> _playerGridPos = const Point(0, 0);
   Set<Point<int>> _visitedTiles = {};
+  Map<String, String> _npcLocations = {}; // npcId -> mapId
+  Map<String, Npc> _npcStates = {}; // npcId -> Npc (Persisted modifications)
 
   // Battle State
   Battle? _currentBattle;
@@ -94,6 +117,8 @@ class GameState extends ChangeNotifier {
   Set<String> _completedMissionIds = {};
 
   // Public getters
+  ApiService get apiService => _apiService;
+  Map<String, dynamic>? get userId => _userId;
   int get tick => _tick;
   WorldClock get clock => _clock;
   Player get player => _player;
@@ -108,6 +133,43 @@ class GameState extends ChangeNotifier {
   bool get isGameOver => isDead;
 
   void notify() => notifyListeners();
+
+  // --- Auth ---
+
+  Future<String?> login(String username, String password) async {
+    try {
+      final user = await _apiService.login(username, password);
+      _userId = user;
+      _log('登录成功，用户ID: ${user['id']}');
+      notify();
+      return null; // Success
+    } catch (e) {
+      return e.toString().replaceAll('Exception: ', '');
+    }
+  }
+
+  Future<String?> register(String username, String password) async {
+    try {
+      await _apiService.register(username, password);
+      _log('注册成功');
+      // Auto login after register? Or just return success.
+      return null;
+    } catch (e) {
+      return e.toString().replaceAll('Exception: ', '');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _apiService.logout();
+    } catch (_) {
+      // Ignore
+    }
+    _userId = null;
+    _remoteSaveId = null;
+    _log('已登出');
+    notify();
+  }
 
   void resetGame() {
     _tick = 0;
@@ -144,6 +206,26 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void startNewGame(Player player) {
+    _tick = 0;
+    _clock = const WorldClock(year: 1001, month: 1, day: 1);
+    _player = player;
+    _mapNodes = _seedMap();
+    _currentNode = _mapNodes.first;
+    _logs = [LogEntry('大道争锋，我辈修士当逆天而行！', tick: 0)];
+    _playerGridPos = const Point(0, 0);
+    _visitedTiles = {_playerGridPos};
+    _currentBattle = null;
+    _currentInteractionNpc = null;
+    _showingBreakthrough = false;
+    _breakthroughSuccess = false;
+    _activeMissions = [];
+    _completedMissionIds = {};
+    _remoteSaveId = null;
+    saveToDisk();
+    notifyListeners();
+  }
+
   // --- Shared Utility Methods ---
 
   void _log(String message) {
@@ -158,10 +240,61 @@ class GameState extends ChangeNotifier {
   void _advanceTime(num days) {
     _tick += (days * 1).toInt();
     _clock = _clock.tickDays(days);
+
+    // NPC Movement
+    _moveNpcs();
+
     final remainingLife = _player.lifespanDays - days;
     _player = _player.copyWith(lifespanDays: remainingLife);
     if (remainingLife <= 0) {
       _log('寿元耗尽，道途止于此。');
+    }
+  }
+
+  // --- NPC Logic ---
+
+  void _initNpcLocations() {
+    _npcLocations.clear();
+    // Load initial locations from MapsRepository
+    for (final node in _mapNodes) {
+      for (final npcId in node.npcIds) {
+        _npcLocations[npcId] = node.id;
+      }
+    }
+    // Ensure all NPCs have a location (fallback to first map if not placed)
+    for (final npc in NpcsRepository.getAll()) {
+      if (!_npcLocations.containsKey(npc.id)) {
+        // Random map or specific spawn? Let's say random map for unplaced NPCs
+        _npcLocations[npc.id] = _mapNodes[_rng.nextInt(_mapNodes.length)].id;
+      }
+    }
+  }
+
+  void _moveNpcs() {
+    // 30% chance per day/tick for mobile NPCs to move
+    // Since _advanceTime might be called with multiple days, we should technically loop
+    // or just simulate one move attempt per advance call for simplicity.
+
+    // We iterate a copy of keys to avoid modification issues if any
+    final npcIds = _npcLocations.keys.toList();
+    for (final npcId in npcIds) {
+      final npc = NpcsRepository.get(npcId);
+      if (npc == null) continue;
+
+      if (npc.isMobile) {
+        // 20% chance to move each time time advances
+        if (_rng.nextDouble() < 0.2) {
+          final newMap = _mapNodes[_rng.nextInt(_mapNodes.length)];
+          _npcLocations[npcId] = newMap.id;
+
+          // Optional: Log if nearby?
+          // if (newMap.id == _currentNode.id) {
+          //   _log('${npc.name} 来到了此地。');
+          // } else if (_npcLocations[npcId] == _currentNode.id && newMap.id != _currentNode.id) {
+          //   _log('${npc.name} 离开了此地。');
+          // }
+        }
+      }
     }
   }
 
@@ -209,11 +342,11 @@ class GameState extends ChangeNotifier {
         // Limit max stack? For now let's say 999 or unlimited.
         // Let's go with unlimited for simplicity or 999.
         final newItem = existing.copyWith(count: newCount);
-        
+
         final newInventory = [..._player.inventory];
         newInventory[index] = newItem;
         _player = _player.copyWith(inventory: newInventory);
-        
+
         updateAllCollectionProgress();
         return true;
       }
@@ -224,7 +357,7 @@ class GameState extends ChangeNotifier {
       _log('包裹已满，放弃了 ${item.name}');
       return false;
     }
-    
+
     _player = _player.copyWith(inventory: [..._player.inventory, item]);
     updateAllCollectionProgress();
     return true;
@@ -239,12 +372,8 @@ class GameState extends ChangeNotifier {
     );
   }
 
-  double _itemDefenseBonus() {
-    return _player.equipped.fold<double>(
-      0,
-      (sum, item) => sum + item.defenseBonus,
-    );
-  }
+  // Moved to battle_logic.dart to be closer to usage
+  // double _itemDefenseBonus() { ... }
 
   double _itemSpeedBonus() {
     return _player.equipped.fold<double>(0, (sum, item) => sum + item.speed);
