@@ -1,23 +1,61 @@
-
 part of '../game_state.dart';
 
 extension MissionLogic on GameState {
+  // 刷新可接任务
+  void refreshAvailableMissions({int cost = 10}) {
+    if (cost > 0) {
+      final spiritStones = _player.inventory
+          .where((i) => i.id == 'spirit_stone')
+          .length;
+      if (spiritStones < cost) {
+        _log('灵石不足，无法刷新任务（需要 $cost 灵石）');
+        return;
+      }
+      _removeItemsById('spirit_stone', cost);
+      _log('消耗 $cost 灵石刷新了任务列表');
+    }
+
+    final allMissions = MissionsRepository.missions;
+    if (allMissions.isEmpty) return;
+
+    // Randomly select up to 10 missions
+    final count = min(10, allMissions.length);
+    final shuffled = [...allMissions]..shuffle(_rng);
+    _availableMissionIds = shuffled.take(count).map((m) => m.id).toList();
+
+    notify();
+    saveToDisk();
+  }
+
   // 接取任务
   void acceptMission(Mission mission) {
     if (_activeMissions.any((m) => m.missionId == mission.id)) {
       _log('已接取该任务：${mission.title}');
       return;
     }
-    
-    final active = ActiveMission(missionId: mission.id);
-    _activeMissions = [..._activeMissions, active]; // Reassign to trigger update if watched
+
+    final active = ActiveMission(
+      missionId: mission.id,
+      startYear: _clock.year,
+      startMonth: _clock.month,
+      startDay: _clock.day,
+      startHour: _clock.hour,
+    );
+    _activeMissions = [
+      ..._activeMissions,
+      active,
+    ]; // Reassign to trigger update if watched
+
+    // Remove from available list
+    _availableMissionIds = [..._availableMissionIds]..remove(mission.id);
+
     _log('接取任务：${mission.title}');
-    
+
     // 如果是收集任务，立即检查背包
     if (mission.type == MissionType.collect) {
       _updateCollectionProgressFor(active, mission);
     }
-    
+
     notify();
     saveToDisk();
   }
@@ -38,6 +76,26 @@ extension MissionLogic on GameState {
     final mission = MissionsRepository.getMissionById(active.missionId);
     if (mission == null) return;
 
+    // Check expiration
+    if (mission.timeLimitDays != null) {
+      // Calculate elapsed days
+      // Simplify: (currentYear - startYear) * 360 + (currentMonth - startMonth) * 30 + (currentDay - startDay)
+      // Assuming 12 months/year, 30 days/month
+      final startTotalDays =
+          active.startYear * 360 + active.startMonth * 30 + active.startDay;
+      final currentTotalDays =
+          _clock.year * 360 + _clock.month * 30 + _clock.day;
+      final elapsedDays = currentTotalDays - startTotalDays;
+
+      if (elapsedDays > mission.timeLimitDays!) {
+        _log('任务已过期：${mission.title}');
+        _activeMissions = [..._activeMissions]..remove(active);
+        notify();
+        saveToDisk();
+        return;
+      }
+    }
+
     // 再次更新状态确保准确
     if (mission.type == MissionType.collect) {
       _updateCollectionProgressFor(active, mission);
@@ -51,8 +109,8 @@ extension MissionLogic on GameState {
     // 扣除收集物品
     if (mission.type == MissionType.collect) {
       if (!_hasItemCount(mission.targetId, mission.targetCount)) {
-         _log('缺少任务物品：${mission.targetName}');
-         return;
+        _log('缺少任务物品：${mission.targetName}');
+        return;
       }
       _removeItemsById(mission.targetId, mission.targetCount);
       _log('上交了 ${mission.targetCount} 个 ${mission.targetName}');
@@ -60,19 +118,21 @@ extension MissionLogic on GameState {
 
     // 发放奖励
     _distributeRewards(mission.reward);
-    
+
     // 移除任务并记录
     _activeMissions = [..._activeMissions]..remove(active);
     _completedMissionIds = {..._completedMissionIds, mission.id};
     _log('任务完成：${mission.title}！');
-    
+
     notify();
     saveToDisk();
   }
-  
+
   void _distributeRewards(MissionReward reward) {
     if (reward.contribution > 0) {
-      _player = _player.copyWith(contribution: _player.contribution + reward.contribution);
+      _player = _player.copyWith(
+        contribution: _player.contribution + reward.contribution,
+      );
       _log('获得宗门贡献 ${reward.contribution}');
     }
     if (reward.exp > 0) {
@@ -94,7 +154,9 @@ extension MissionLogic on GameState {
     // 使用新的列表以避免修改正在遍历的列表（虽然这里只修改内部属性）
     for (final active in _activeMissions) {
       final mission = MissionsRepository.getMissionById(active.missionId);
-      if (mission != null && mission.type == MissionType.hunt && mission.targetId == enemyId) {
+      if (mission != null &&
+          mission.type == MissionType.hunt &&
+          mission.targetId == enemyId) {
         if (active.currentCount < mission.targetCount) {
           active.currentCount++;
           if (active.currentCount >= mission.targetCount) {
@@ -110,7 +172,7 @@ extension MissionLogic on GameState {
       saveToDisk();
     }
   }
-  
+
   // 更新所有收集任务进度 (需在 InventoryLogic 或 UI 中调用)
   void updateAllCollectionProgress() {
     bool changed = false;
@@ -120,7 +182,8 @@ extension MissionLogic on GameState {
         final oldCompleted = active.isCompleted;
         final oldCount = active.currentCount;
         _updateCollectionProgressFor(active, mission);
-        if (active.isCompleted != oldCompleted || active.currentCount != oldCount) {
+        if (active.isCompleted != oldCompleted ||
+            active.currentCount != oldCount) {
           changed = true;
         }
       }

@@ -22,10 +22,7 @@ class MissionHallScreen extends StatelessWidget {
           ),
         ),
         body: const TabBarView(
-          children: [
-            _AvailableMissionsList(),
-            _ActiveMissionsList(),
-          ],
+          children: [_AvailableMissionsList(), _ActiveMissionsList()],
         ),
       ),
     );
@@ -169,12 +166,17 @@ class _ActiveMissionCard extends StatelessWidget {
                   mission.title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: active.isCompleted ? theme.colorScheme.primary : null,
+                    color: active.isCompleted
+                        ? theme.colorScheme.primary
+                        : null,
                   ),
                 ),
                 if (active.isCompleted)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(4),
@@ -267,10 +269,14 @@ class _RewardPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> items = [];
     if (reward.contribution > 0) {
-      items.add(_RewardItem(icon: Icons.groups, text: '贡献 ${reward.contribution}'));
+      items.add(
+        _RewardItem(icon: Icons.groups, text: '贡献 ${reward.contribution}'),
+      );
     }
     if (reward.exp > 0) {
-      items.add(_RewardItem(icon: Icons.auto_awesome, text: '修为 ${reward.exp}'));
+      items.add(
+        _RewardItem(icon: Icons.auto_awesome, text: '修为 ${reward.exp}'),
+      );
     }
     if (reward.itemIds.isNotEmpty) {
       items.add(
@@ -281,11 +287,7 @@ class _RewardPreview extends StatelessWidget {
       );
     }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      children: items,
-    );
+    return Wrap(spacing: 12, runSpacing: 8, children: items);
   }
 }
 

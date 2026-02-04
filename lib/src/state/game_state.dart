@@ -12,6 +12,7 @@ import '../data/maps_repository.dart';
 import '../data/npcs_repository.dart';
 import '../data/punishments_repository.dart';
 import '../data/traits_repository.dart';
+
 import '../models/battle.dart';
 import '../models/enemy.dart';
 import '../models/mission.dart';
@@ -62,6 +63,7 @@ class GameState extends ChangeNotifier {
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
     _log('踏入修真界，起点：${_currentNode.name}');
+    _ensureAvailableMissions();
     // _initGameData(); // Moved to login success or manual trigger
   }
 
@@ -95,6 +97,16 @@ class GameState extends ChangeNotifier {
   static const String _saveKey = 'wangu_save_v1';
 
   final Random _rng;
+  List<String> _availableMissionIds = [];
+  List<String> get availableMissionIds => _availableMissionIds;
+
+  // Initialize available missions if empty
+  void _ensureAvailableMissions() {
+    if (_availableMissionIds.isEmpty) {
+      refreshAvailableMissions(cost: 0);
+    }
+  }
+
   final ApiService _apiService = ApiService();
   String? _remoteSaveId;
   Map<String, dynamic>? _userId;
