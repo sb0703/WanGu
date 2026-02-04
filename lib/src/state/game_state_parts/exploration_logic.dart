@@ -116,7 +116,7 @@ extension ExplorationLogic on GameState {
   }
 
   /// Enter a new region (travel)
-  void enterRegion(MapNode node) {
+  Future<void> enterRegion(MapNode node) async {
     if (isDead) return;
     if (_currentNode == node) return; // Already here
 
@@ -132,7 +132,7 @@ extension ExplorationLogic on GameState {
   }
 
   /// Move within the grid
-  void exploreMove(int row, int col) {
+  Future<void> exploreMove(int row, int col) async {
     if (isDead) return;
 
     final target = Point(row, col);
@@ -162,7 +162,7 @@ extension ExplorationLogic on GameState {
     // Let's say 2 hours per step?
     // _clock = _clock.tickHours(2); // Need to implement tickHours in WorldClock or just ignore for now
 
-    _triggerNodeEvent(_currentNode);
+    await _triggerNodeEvent(_currentNode);
     notify();
     saveToDisk(); // Auto-save
   }
@@ -193,13 +193,13 @@ extension ExplorationLogic on GameState {
     saveToDisk(); // Auto-save
   }
 
-  void _triggerNodeEvent(MapNode node) {
+  Future<void> _triggerNodeEvent(MapNode node) async {
     final roll = _rng.nextDouble();
 
     if (roll < node.enemyChance) {
-      _encounterEnemy(node);
+      await _encounterEnemy(node);
     } else if (roll < node.enemyChance + node.herbChance) {
-      _findResource(node);
+      await _findResource(node);
     } else {
       _encounterNpc();
     }
@@ -211,40 +211,14 @@ extension ExplorationLogic on GameState {
       return;
     }
 
-    // Use server to generate drops
-    try {
-      final drops = await _apiService.generateDrops(node.id, 'map_node');
-      if (drops.isEmpty) {
-        _log('虽然有些痕迹，但没找到有价值的东西。');
-        return;
-      }
+    // Local Logic (Server drops only for enemies now)
+    final resourceId = node.resourceIds[_rng.nextInt(node.resourceIds.length)];
+    final item = ItemsRepository.get(resourceId);
+    if (item == null) return;
 
-      for (final drop in drops) {
-        final itemId = drop['itemId'];
-        final count = drop['count'] ?? 1;
-        final item = ItemsRepository.get(itemId);
-        if (item != null) {
-          final itemToAdd = item.copyWith(count: count);
-          final added = _addItem(itemToAdd);
-          if (added) {
-            _log('探索发现：${itemToAdd.name} x$count');
-          } else {
-            _log('包裹已满，无法拾取 ${itemToAdd.name}');
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Server drop generation failed: $e');
-      // Fallback to local logic
-      final resourceId =
-          node.resourceIds[_rng.nextInt(node.resourceIds.length)];
-      final item = ItemsRepository.get(resourceId);
-      if (item == null) return;
-
-      final added = _addItem(item);
-      if (added) {
-        _log('探索发现：${item.name}');
-      }
+    final added = _addItem(item);
+    if (added) {
+      _log('探索发现：${item.name}');
     }
   }
 

@@ -47,30 +47,8 @@ extension BattleLogic on GameState {
     return max(1, (baseDmg * multiplier).round());
   }
 
-  /// Start Battle (Server initiated)
-  Future<void> startServerBattle(Enemy enemy) async {
-    try {
-      final data = await _apiService.startBattle(enemy.id);
-      final battleId = data['battleId'];
-      // Assuming server returns initial state
-      _currentBattle = Battle(
-        enemy: enemy,
-        playerHp: _player.stats.hp,
-        playerMaxHp: _player.stats.maxHp,
-        playerSpirit: _player.stats.spirit,
-        playerMaxSpirit: _player.stats.maxSpirit,
-      )..id = battleId; // Need to add id to Battle model
-
-      notify();
-    } catch (e) {
-      debugPrint('Start server battle failed: $e');
-      // Fallback to local battle? Or just error.
-      // For now, let's keep local battle logic if server fails or for dev
-      _startLocalBattle(enemy);
-    }
-  }
-
-  void _startLocalBattle(Enemy enemy) {
+  /// Start Battle (Local initiated)
+  void startBattle(Enemy enemy) {
     _currentBattle = Battle(
       enemy: enemy,
       playerHp: _player.stats.hp,
@@ -81,27 +59,9 @@ extension BattleLogic on GameState {
     notify();
   }
 
-  /// Player Basic Attack
-  Future<void> progressBattle() async {
+  /// Player Basic Attack (Local only for now to ensure consistency)
+  void progressBattle() {
     if (_currentBattle == null || _currentBattle!.isOver) return;
-
-    // Try server action first
-    if (_currentBattle!.id != null) {
-      try {
-        final result = await _apiService.battleAction(
-          _currentBattle!.id!,
-          'ATTACK',
-        );
-        _updateBattleStateFromServer(result);
-        notify();
-        return;
-      } catch (e) {
-        debugPrint('Server battle action failed: $e');
-        // Fallback to local
-      }
-    }
-
-    // Local Logic (Existing)
     _progressLocalBattle();
   }
 
@@ -175,7 +135,7 @@ extension BattleLogic on GameState {
   }
 
   /// Player Cast Spell (Weapon Skill)
-  Future<void> playerCastSpell() async {
+  void playerCastSpell() {
     if (_currentBattle == null || _currentBattle!.isOver) return;
 
     final battle = _currentBattle!;
@@ -185,22 +145,6 @@ extension BattleLogic on GameState {
       battle.logs.add(BattleLog('你没有装备带有术法的法宝！', isPlayerAction: true));
       notify();
       return;
-    }
-
-    // Server Action
-    if (battle.id != null) {
-      try {
-        final result = await _apiService.battleAction(
-          battle.id!,
-          'SPELL',
-          params: {'spellId': weapon.skillName}, // Or weapon ID
-        );
-        _updateBattleStateFromServer(result);
-        notify();
-        return;
-      } catch (e) {
-        debugPrint('Server spell action failed: $e');
-      }
     }
 
     // Local Logic
@@ -276,20 +220,6 @@ extension BattleLogic on GameState {
   Future<void> attemptFlee() async {
     if (_currentBattle == null || _currentBattle!.isOver) return;
 
-    if (_currentBattle!.id != null) {
-      try {
-        final result = await _apiService.battleAction(
-          _currentBattle!.id!,
-          'FLEE',
-        );
-        _updateBattleStateFromServer(result);
-        notify();
-        return;
-      } catch (e) {
-        debugPrint('Server flee action failed: $e');
-      }
-    }
-
     final battle = _currentBattle!;
     final enemy = battle.enemy;
 
@@ -310,50 +240,6 @@ extension BattleLogic on GameState {
       battle.logs.add(BattleLog('逃跑失败！', isPlayerAction: true));
       _resolveEnemyTurn(battle);
       notify();
-    }
-  }
-
-  void _updateBattleStateFromServer(Map<String, dynamic> data) {
-    if (_currentBattle == null) return;
-
-    // Update HP/Spirit
-    if (data['playerHp'] != null) {
-      _currentBattle!.playerHp = data['playerHp'];
-    }
-    if (data['playerSpirit'] != null) {
-      _currentBattle!.playerSpirit = data['playerSpirit'];
-    }
-    if (data['enemyHp'] != null) {
-      _currentBattle!.enemyHp = data['enemyHp'];
-    }
-
-    // Add Logs
-    if (data['logs'] != null) {
-      for (final log in data['logs']) {
-        _currentBattle!.logs.add(
-          BattleLog(
-            log['message'],
-            isPlayerAction: log['isPlayerAction'] ?? false,
-            damage: log['damage'] ?? 0,
-            isCrit: log['isCrit'] ?? false,
-          ),
-        );
-      }
-    }
-
-    // Check State
-    if (data['state'] != null) {
-      final stateStr = data['state'];
-      if (stateStr == 'VICTORY') {
-        _currentBattle!.state = BattleState.victory;
-        _resolveBattleVictory(_currentBattle!);
-      } else if (stateStr == 'DEFEAT') {
-        _currentBattle!.state = BattleState.defeat;
-        // Handle defeat logic if needed
-      } else if (stateStr == 'FLED') {
-        _currentBattle!.state = BattleState.fled;
-        _log('你成功逃离了战斗！');
-      }
     }
   }
 
@@ -425,12 +311,58 @@ extension BattleLogic on GameState {
     _log('击败 ${enemy.name}，获得 ${enemy.xpReward} 修为');
 
     // Update Hunt Missions
-    // Need to expose updateHuntProgress from MissionLogic or use a cleaner way
-    // For now assuming it's available on GameState but part files are separate.
-    // Since this is `part of GameState`, we can call methods from other parts if they are on GameState.
     updateHuntProgress(enemy.id);
 
-    // Loot
+    // Loot (Async)
+    _handleBattleLoot(enemy).then((_) {
+      saveToDisk(); // Auto-save after loot processing
+    });
+  }
+
+  Future<void> _handleBattleLoot(Enemy enemy) async {
+    bool useLocal = true;
+
+    // 1. Try Server Logic
+    try {
+      final dropsResponse = await _apiService.generateDrops(enemy.id);
+      useLocal = false; // Server responded
+
+      // Parse DropRollResponse: { "drops": [ { ...item... } ] }
+      final dropsList = dropsResponse['drops'];
+      if (dropsList is List && dropsList.isNotEmpty) {
+        for (final drop in dropsList) {
+          // drop is Map<String, dynamic> representing Item
+          final itemId = drop['id']?.toString();
+          if (itemId == null) continue;
+          
+          final count = drop['count'] is int ? drop['count'] as int : 1;
+
+          // We can use the full item data from server, or just ID to lookup local repo.
+          // Using local repo ensures consistency with local game data definitions.
+          // But if server sends unique generated items, we should construct from JSON.
+          // For now, let's try lookup by ID first, if not found (or for dynamic items), construct.
+          // Given the context, ItemsRepository.get(itemId) is standard.
+          
+          final item = ItemsRepository.get(itemId);
+          if (item != null) {
+            final itemToAdd = item.copyWith(count: count);
+            if (_addItem(itemToAdd)) {
+              _log('拾取战利品：${item.name} ${count > 1 ? 'x$count' : ''}');
+            } else {
+              _log('包裹已满，无法拾取 ${item.name}');
+            }
+          }
+        }
+        notify();
+      }
+    } catch (e) {
+      debugPrint('Server drops failed: $e');
+      useLocal = true; // Fallback to local on error
+    }
+
+    if (!useLocal) return;
+
+    // 2. Local Fallback Logic
     if (enemy.loot.isNotEmpty && _rng.nextDouble() < 0.3) {
       // Create weighted candidates list
       final candidates = <MapEntry<String, int>>[];
@@ -488,23 +420,8 @@ extension BattleLogic on GameState {
           }
         }
       }
+      notify();
     }
-    // _checkBreakthrough is in CultivationLogic part, accessible
-    // However, the analyzer says undefined. We need to check if _checkBreakthrough is private or public.
-    // It's private `_checkBreakthrough`. Parts can access private members of the main class and other parts.
-    // Analyzer might be confused if the file isn't fully loaded or saved.
-    // But let's check `_checkBreakthrough`.
-    // It seems `_checkBreakthrough` is NOT in `CultivationLogic` I read earlier. It was `attemptBreakthrough`.
-    // Ah, `_checkBreakthrough` might be missing or named differently.
-    // Let's assume we use `attemptBreakthrough` if it checks conditions, but usually that's user action.
-    // We need a method to check if we can level up or just notify.
-    // The error says `_checkBreakthrough` is undefined.
-    // Let's check CultivationLogic again or just remove it if not needed here.
-    // Or maybe it's `_checkLevelUp`?
-    // For now I will comment it out to fix error.
-    // _checkBreakthrough();
-
-    saveToDisk(); // Auto-save
   }
 
   void _resolveBattleDefeat(Battle battle) {
@@ -512,7 +429,13 @@ extension BattleLogic on GameState {
     _player = _player.copyWith(
       stats: _player.stats.copyWith(hp: 0, spirit: battle.playerSpirit),
     );
-    _log('被 ${enemy.name} 击败，身受重伤！');
+    _log('被 ${enemy.name} 击败，身死道消！');
+
+    // Death: Delete save and character
+    clearSave().then((_) {
+      _log('存档已删除。');
+      notify();
+    });
   }
 
   void closeBattle() {

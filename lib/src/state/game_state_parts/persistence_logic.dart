@@ -24,23 +24,21 @@ extension PersistenceLogic on GameState {
       if (_remoteSaveId != null) {
         await _apiService.updateSave(_remoteSaveId!, _player.name, payload);
         _log('云端存档已同步');
-      } else {
-        // Need userId to bind save? If not logged in, maybe skip or just create unbound if API allows?
-        // Prompt implies binding to user. If no user, maybe we shouldn't save to server or it will fail/be anonymous.
-        // Let's pass userId if available.
+      } else if (_userId != null) {
+        // If we have a logged-in user but no remoteSaveId yet, create a new save.
         final result = await _apiService.createSave(
           _player.name,
           payload,
           userId: _userId,
         );
-        _remoteSaveId = result['id'];
-        _log('云端存档已创建');
-        // Save ID locally
-        final prefs = await _prefs();
-        if (prefs != null) {
-          await prefs.setString(GameState._saveKey, jsonEncode(_toJson()));
+        if (result.containsKey('id')) {
+          _remoteSaveId = result['id'].toString();
+          _log('云端存档已创建');
+          // Save again to disk to persist the new _remoteSaveId
+          saveToDisk();
         }
       }
+      // If no userId, we can't save to cloud (or handle anonymous saves if supported)
     } catch (e) {
       debugPrint('Cloud save failed: $e');
     }
@@ -82,6 +80,49 @@ extension PersistenceLogic on GameState {
   Future<bool> clearSave() async {
     final prefs = await _prefs();
     if (prefs == null) return false;
+
+    // 1. Clear cloud save if exists
+    if (_remoteSaveId != null) {
+      try {
+        await _apiService.deleteSave(_remoteSaveId!);
+        _log('云端存档已清除');
+      } catch (e) {
+        debugPrint('Clear cloud save failed: $e');
+      }
+      _remoteSaveId = null;
+    }
+
+    // 2. Delete character if userId exists (assuming we can track character ID)
+    // Currently _remoteSaveId is for PlayerSave, but characters are separate entities in backend.
+    // If we want to delete the character too, we need its ID.
+    // However, we don't store character ID explicitly in GameState yet, only _remoteSaveId.
+    // Assuming backend might handle cascading delete or we need to find character ID.
+    // For now, let's try to delete character if we can infer it or if we stored it.
+    // Since we don't have characterId stored, we might need to list characters or rely on save deletion.
+    // But user specifically asked to delete character.
+    // Let's assume we can find it via listing or maybe we should have stored it.
+    // Given the previous task context, we removed assigning character ID to remoteSaveId.
+    // Let's fetch characters and delete the one matching current name? Or delete all for user?
+    // Safer approach: Delete all characters for this user if we are resetting "the" character?
+    // Or better: Just list characters and delete them.
+    if (_userId != null) {
+      try {
+        final chars = await _apiService.listCharacters(userId: _userId);
+        for (final char in chars) {
+          if (char is Map && char['name'] == _player.name) {
+            final charId = char['id']?.toString();
+            if (charId != null) {
+              await _apiService.deleteCharacter(charId);
+              _log('角色 ${char['name']} 已删除');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Clear character failed: $e');
+      }
+    }
+
+    // 3. Clear local save
     if (!prefs.containsKey(GameState._saveKey)) return false;
     return prefs.remove(GameState._saveKey);
   }

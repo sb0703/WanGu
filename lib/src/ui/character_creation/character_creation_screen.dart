@@ -136,23 +136,15 @@ class _CharacterCreationScreenState extends State<CharacterCreationScreen> {
         },
         'traits': _selectedTraits,
       }, userId: game.userId);
+      
+      // We don't use the result ID here as _remoteSaveId anymore,
+      // because createCharacter returns Character ID, not Save ID.
+      // The Save ID will be generated when saveToDisk() calls createSave() in persistence logic.
     } catch (e) {
       debugPrint('Server character creation failed: $e');
     }
 
-    // Reset game with new player
-    // Ideally GameState should have a method to set player directly or init new game with config
-    // For now, we might need to modify GameState to accept initial player config
-    // or just overwrite the player after reset.
-    // game.resetGame();
-    // TODO: We need a way to inject the custom player into GameState.
-    // game.setPlayer(player); // This method doesn't exist yet.
-
-    // Workaround: We will implement setPlayer in GameState or just overwrite it via a public setter/method if available.
-    // Checking GameState... it has a `resetGame()` which sets a default '韩立'.
-    // We should add `startNewGame(Player player)` to GameState.
-
-    // For now, assuming I will add that method.
+    // Start game (this will trigger saveToDisk -> saveToServer)
     game.startNewGame(player);
 
     if (!mounted) return;

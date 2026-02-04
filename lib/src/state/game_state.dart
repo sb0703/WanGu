@@ -62,16 +62,29 @@ class GameState extends ChangeNotifier {
     _mapNodes = _seedMap();
     _currentNode = _mapNodes.first;
     _log('踏入修真界，起点：${_currentNode.name}');
-    _initGameData();
+    // _initGameData(); // Moved to login success or manual trigger
   }
 
-  Future<void> _initGameData() async {
+  Future<void> _initGameData(String userId) async {
     try {
-      final traits = await _apiService.fetchTraits();
-      if (traits.isNotEmpty) {
-        TraitsRepository.updateTraits(traits);
+      final fate = await _apiService.fetchCharacterFate(userId);
+      if (fate.isNotEmpty) {
+        // Sync player traits from backend
+        if (fate.containsKey('traits')) {
+          final traits = fate['traits'];
+          if (traits is List) {
+            final traitNames = traits.map((e) => e.toString()).toList();
+            // Update player's traits
+            _player = _player.copyWith(traits: traitNames);
+
+            // Optionally update repo definitions if they were full objects,
+            // but currently they are just strings.
+            // TraitsRepository.updateTraits(...);
+          }
+        }
+
         notifyListeners();
-        _log('已从天道（服务器）获取最新命格信息');
+        _log('已从天道（服务器）同步最新命格与角色信息');
       }
     } catch (e) {
       debugPrint('Init game data failed: $e');
@@ -141,6 +154,12 @@ class GameState extends ChangeNotifier {
       final user = await _apiService.login(username, password);
       _userId = user;
       _log('登录成功，用户ID: ${user['id']}');
+
+      final userIdStr = user['id']?.toString();
+      if (userIdStr != null) {
+        _initGameData(userIdStr);
+      }
+
       notify();
       return null; // Success
     } catch (e) {
@@ -206,7 +225,7 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startNewGame(Player player) {
+  void startNewGame(Player player, {String? remoteSaveId}) {
     _tick = 0;
     _clock = const WorldClock(year: 1001, month: 1, day: 1);
     _player = player;
@@ -221,7 +240,7 @@ class GameState extends ChangeNotifier {
     _breakthroughSuccess = false;
     _activeMissions = [];
     _completedMissionIds = {};
-    _remoteSaveId = null;
+    _remoteSaveId = remoteSaveId;
     saveToDisk();
     notifyListeners();
   }
@@ -248,7 +267,13 @@ class GameState extends ChangeNotifier {
     _player = _player.copyWith(lifespanDays: remainingLife);
     if (remainingLife <= 0) {
       _log('寿元耗尽，道途止于此。');
+      _handleDeath();
     }
+  }
+
+  void _handleDeath() {
+    clearSave();
+    notifyListeners();
   }
 
   // --- NPC Logic ---
@@ -383,8 +408,58 @@ class GameState extends ChangeNotifier {
     return EnemiesRepository.rollEnemy(danger);
   }
 
-  void _encounterEnemy(MapNode node) {
-    final enemy = _rollEnemy(node.danger);
+  Future<void> _encounterEnemy(MapNode node) async {
+    Enemy enemy;
+
+    // 1. Try Server Logic
+    try {
+      final seed = _rng.nextInt(1000000); // Random seed
+      final data = await _apiService.generateEncounter(
+        node.id,
+        node.danger, // Using danger as depth for now, assuming 0-100 scale fits or map accordingly
+        seed,
+      );
+      if (data.isNotEmpty && data.containsKey('enemy')) {
+        // Parse from server response
+        // data structure: { "enemy": { ... }, "battleSeed": 123 }
+        final enemyData = data['enemy'] ?? {};
+        final statsMap = enemyData['stats'] ?? {};
+
+        enemy = Enemy(
+          id:
+              enemyData['id']?.toString() ??
+              'unknown_${DateTime.now().millisecondsSinceEpoch}',
+          name: enemyData['name'] ?? 'Unknown Enemy',
+          description: enemyData['description'] ?? 'A mysterious enemy.',
+          dangerLevel: enemyData['dangerLevel'] ?? node.danger,
+          stats: Stats(
+            maxHp: statsMap['maxHp'] ?? 100,
+            hp: statsMap['hp'] ?? 100,
+            maxSpirit: statsMap['maxSpirit'] ?? 50,
+            spirit: statsMap['spirit'] ?? 50,
+            attack: statsMap['attack'] ?? 10,
+            defense: statsMap['defense'] ?? 5,
+            speed: statsMap['speed'] ?? 10,
+            insight: statsMap['insight'] ?? 0,
+            purity: statsMap['purity'] ?? 0,
+          ),
+          loot:
+              (enemyData['loot'] as List?)?.map((e) => e.toString()).toList() ??
+              [],
+          xpReward: enemyData['xpReward'] ?? 10,
+          element: ElementType.values.firstWhere(
+            (e) => e.name == enemyData['element'],
+            orElse: () => ElementType.none,
+          ),
+        );
+      } else {
+        enemy = _rollEnemy(node.danger);
+      }
+    } catch (e) {
+      debugPrint('Server encounter failed: $e');
+      enemy = _rollEnemy(node.danger);
+    }
+
     _log('遭遇 ${enemy.name}！准备战斗！');
 
     // Start Battle State (Use effective stats for max values)

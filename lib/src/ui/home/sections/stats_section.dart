@@ -16,7 +16,6 @@ class StatsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
     final player = game.player;
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: ListView(
@@ -510,6 +509,7 @@ class _CharacterStatusCard extends StatelessWidget {
                         final buff = activeBuffs[index];
                         return Tooltip(
                           message: '${buff.name}: ${buff.description}',
+                          triggerMode: TooltipTriggerMode.tap,
                           child: Chip(
                             label: Text(
                               buff.name,

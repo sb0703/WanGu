@@ -144,7 +144,6 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
-
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
@@ -159,15 +158,12 @@ class ApiService {
 
   // --- Drops API ---
 
-  Future<List<dynamic>> generateDrops(
-    String sourceId,
-    String sourceType,
-  ) async {
+  Future<Map<String, dynamic>> generateDrops(String enemyId) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/drops/generate'),
+        Uri.parse('$baseUrl/battle/drops'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'sourceId': sourceId, 'sourceType': sourceType}),
+        body: jsonEncode({'enemyId': enemyId}),
       );
 
       if (response.statusCode == 200) {
@@ -182,25 +178,52 @@ class ApiService {
     }
   }
 
-  // --- Game Data API ---
-
-  Future<List<dynamic>> fetchTraits() async {
+  Future<Map<String, dynamic>> generateEncounter(
+    String mapId,
+    int depth,
+    int seed,
+  ) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/game-data/traits'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/battle/spawn'),
         headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'mapId': mapId, 'depth': depth, 'seed': seed}),
       );
 
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
-        // Fallback or empty if not found
-        debugPrint('Fetch traits failed: ${response.statusCode}');
-        return [];
+        throw Exception(
+          'Generate encounter failed: ${response.statusCode} ${response.body}',
+        );
       }
     } catch (e) {
-      debugPrint('Connection failed when fetching traits: $e');
-      return [];
+      throw Exception('Connection failed: $e');
+    }
+  }
+
+  // --- Game Data API ---
+
+  Future<Map<String, dynamic>> fetchCharacterFate(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/characters/fate/$id'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        return {};
+      } else {
+        debugPrint('Fetch character fate failed: ${response.statusCode}');
+        return {};
+      }
+    } catch (e) {
+      debugPrint('Connection failed when fetching character fate: $e');
+      return {};
     }
   }
 
@@ -251,6 +274,17 @@ class ApiService {
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
         throw Exception('List characters failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Connection failed: $e');
+    }
+  }
+
+  Future<void> deleteCharacter(String id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/characters/$id'));
+      if (response.statusCode != 200) {
+        throw Exception('Delete character failed: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Connection failed: $e');
