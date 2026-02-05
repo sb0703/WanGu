@@ -11,7 +11,6 @@ import '../data/missions_repository.dart';
 import '../data/maps_repository.dart';
 import '../data/npcs_repository.dart';
 import '../data/punishments_repository.dart';
-import '../data/traits_repository.dart';
 
 import '../models/battle.dart';
 import '../models/enemy.dart';

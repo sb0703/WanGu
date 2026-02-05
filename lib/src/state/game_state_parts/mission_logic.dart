@@ -2,29 +2,35 @@ part of '../game_state.dart';
 
 extension MissionLogic on GameState {
   // 刷新可接任务
-  void refreshAvailableMissions({int cost = 10}) {
+  bool refreshAvailableMissions({int cost = 10}) {
     if (cost > 0) {
       final spiritStones = _player.inventory
           .where((i) => i.id == 'spirit_stone')
           .length;
       if (spiritStones < cost) {
-        _log('灵石不足，无法刷新任务（需要 $cost 灵石）');
-        return;
+        return false;
       }
       _removeItemsById('spirit_stone', cost);
       _log('消耗 $cost 灵石刷新了任务列表');
     }
 
     final allMissions = MissionsRepository.missions;
-    if (allMissions.isEmpty) return;
+    if (allMissions.isEmpty) return false;
 
-    // Randomly select up to 10 missions
-    final count = min(10, allMissions.length);
+    // Randomly select between 2 and 10 missions (or less if not enough missions)
+    final maxCount = min(10, allMissions.length);
+    // Ensure we don't try to get more than available, and at least 1 if possible
+    final minCount = min(2, maxCount);
+
+    // Random count between minCount and maxCount
+    final count = minCount + _rng.nextInt(maxCount - minCount + 1);
+
     final shuffled = [...allMissions]..shuffle(_rng);
     _availableMissionIds = shuffled.take(count).map((m) => m.id).toList();
 
     notify();
     saveToDisk();
+    return true;
   }
 
   // 接取任务

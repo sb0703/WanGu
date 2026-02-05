@@ -14,6 +14,41 @@ class MissionHallScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('任务堂'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: '刷新任务 (10灵石)',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('刷新任务'),
+                    content: const Text('是否消耗 10 灵石刷新可接任务列表？'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('取消'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          final success = context
+                              .read<GameState>()
+                              .refreshAvailableMissions();
+                          if (!success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('灵石不足，无法刷新任务')),
+                            );
+                          }
+                        },
+                        child: const Text('确定'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: '可接任务'),
@@ -35,16 +70,36 @@ class _AvailableMissionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final game = context.watch<GameState>();
-    final activeIds = game.activeMissions.map((m) => m.missionId).toSet();
-    final completedIds = game.completedMissionIds;
+    final availableIds = game.availableMissionIds;
 
-    final availableMissions = MissionsRepository.missions.where((m) {
-      return !activeIds.contains(m.id) && !completedIds.contains(m.id);
-    }).toList();
-
-    if (availableMissions.isEmpty) {
-      return const Center(child: Text('当前暂无新任务'));
+    if (availableIds.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('当前暂无新任务'),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                final success = game.refreshAvailableMissions();
+                if (!success) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('灵石不足，无法刷新任务')));
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('刷新 (10灵石)'),
+            ),
+          ],
+        ),
+      );
     }
+
+    final availableMissions = availableIds
+        .map((id) => MissionsRepository.getMissionById(id))
+        .whereType<Mission>()
+        .toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
